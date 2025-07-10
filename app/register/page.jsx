@@ -2,238 +2,164 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
+import Link from 'next/link';
+import { User, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-// Icons for a polished and intuitive form
-import { 
-  UserIcon, 
-  AtSymbolIcon, 
-  LockClosedIcon, 
-  ExclamationCircleIcon 
-} from '@heroicons/react/24/solid';
+// Reusable SVG icon for the logo.
+const TechLogoIcon = (props) => (
+    <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <defs>
+            <linearGradient id="registerLogoGradient" x1="12" y1="20" x2="28" y2="20" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#F472B6"/>
+                <stop offset="1" stopColor="#A78BFA"/>
+            </linearGradient>
+        </defs>
+        <path d="M12 10H28" stroke="url(#registerLogoGradient)" strokeWidth="3.5" strokeLinecap="round"/>
+        <path d="M20 10V30" stroke="url(#registerLogoGradient)" strokeWidth="3.5" strokeLinecap="round"/>
+        <path d="M16 30C16 27.7909 17.7909 26 20 26C22.2091 26 24 27.7909 24 30" stroke="url(#registerLogoGradient)" strokeWidth="3.5" strokeLinecap="round"/>
+    </svg>
+);
 
 
-/**
- * Reusable, animated alert for global form errors.
- */
-function AuthAlert({ message }) {
-  if (!message) return null;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      layout
-      className="flex items-center gap-3 rounded-md bg-red-50 p-3 text-sm text-red-700"
-    >
-      <ExclamationCircleIcon className="h-5 w-5" />
-      <span>{message}</span>
-    </motion.div>
-  );
-}
-
-/**
- * Reusable, animated component for individual field errors.
- */
-function FieldError({ message }) {
-  if (!message) return null;
-  return (
-    <motion.p
-      initial={{ opacity: 0, y: -5 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -5 }}
-      className="mt-1.5 flex items-center gap-1 text-xs text-red-600"
-    >
-      <ExclamationCircleIcon className="h-4 w-4" />
-      {message}
-    </motion.p>
-  );
-}
-
-export default function Register() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { register, loading, error: globalError, fieldErrors, clearErrors } = useAuthStore();
+  const { register, loading } = useAuthStore();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [localError, setLocalError] = useState('');
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLocalError('');
-
-  if (password !== confirmPassword) {
-    setLocalError('Passwords do not match.');
-    return;
-  }
-
-  if (password.length < 8) {
-    setLocalError('Password must be at least 8 characters long.');
-    return;
-  }
-
-  try {
-    const success = await register({
-      name,
-      email,
-      password,
-      password_confirmation: confirmPassword, // ✅ important mapping
-    });
-    
-
-    if (success) {
-      router.push('/login');
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match.');
+      return;
     }
-  } catch (err) {
-    // The Zustand store logs and sets the global error,
-    // but you can also catch and show it locally if you want:
-    console.error('Registration failed on client:', err);
-    setLocalError(err.message);
-  }
-};
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long.');
+      return;
+    }
 
+    try {
+      await register({
+        name,
+        email,
+        password,
+        password_confirmation: confirmPassword,
+      });
+      
+      toast.success('Registration successful! Please log in.');
+      router.push('/login');
+
+    } catch (err) {
+      // The store handles API errors, but we can catch them here too.
+      // Use toast for a better UX than alert().
+      toast.error(err.message || 'Registration failed. Please try again.');
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* App Logo/Name */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white">Create an Account</h1>
-          <p className="mt-2 text-lg text-gray-400">Join us and get started.</p>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="p-6 sm:p-10 bg-white rounded-xl shadow-lg w-full max-w-md">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2">
+                <TechLogoIcon className="h-9 w-9" />
+                <span className="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text">
+                    E-COMMERCES
+                </span>
+            </Link>
+            <p className="text-gray-500 mt-2">Create your account to get started.</p>
         </div>
 
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-2xl p-8 space-y-5"
-          noValidate
-        >
-          <AnimatePresence>
-            {(localError || globalError) && <AuthAlert message={localError || globalError} />}
-          </AnimatePresence>
-
-          {/* Name Input */}
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="sr-only">Full name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <UserIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="name"
-                type="text"
-                autoComplete="name"
-                required
-                className="w-full rounded-md border-gray-300 py-3 pl-10 pr-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <AnimatePresence><FieldError message={fieldErrors?.name?.[0]} /></AnimatePresence>
-          </div>
-
-          {/* Email Input */}
-          <div>
-            <label htmlFor="email" className="sr-only">Email address</label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <AtSymbolIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="w-full rounded-md border-gray-300 py-3 pl-10 pr-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <AnimatePresence><FieldError message={fieldErrors?.email?.[0]} /></AnimatePresence>
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label htmlFor="password" className="sr-only">Password</label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <LockClosedIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="w-full rounded-md border-gray-300 py-3 pl-10 pr-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Password (min. 8 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <AnimatePresence><FieldError message={fieldErrors?.password?.[0]} /></AnimatePresence>
-          </div>
-
-          {/* Confirm Password Input */}
-          <div>
-            <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <LockClosedIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="w-full rounded-md border-gray-300 py-3 pl-10 pr-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={loading}
-              />
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                </span>
+                <input
+                id="name" type="text" value={name} onChange={(e) => setName(e.target.value)}
+                placeholder='Enter Full Name'
+                className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                required disabled={loading}
+                />
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Creating Account...
-              </>
-            ) : 'Sign Up'}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                </span>
+                <input
+                id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder='Enter Email'
+                className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                required disabled={loading}
+                />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                </span>
+                <input
+                  id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
+                  placeholder='Enter Password'
+                  className="w-full py-2 pl-10 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  required disabled={loading}
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer">
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                </span>
+                <input
+                  id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder='Enter Confirm Password'
+                  className="w-full py-2 pl-10 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  required disabled={loading}
+                />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer">
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full flex justify-center items-center bg-purple-600 text-white py-2.5 rounded-md hover:bg-purple-700 disabled:bg-purple-400 transition-colors">
+            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Create Account'}
           </button>
-        </motion.form>
+        </form>
 
-       
-<p className="text-center text-sm text-gray-400">
-  Already have an account?{' '}
-  {/* THIS IS THE CORRECTED PART */}
-  <Link 
-    href="/login"
-    className="font-medium text-indigo-400 hover:text-indigo-300"
-  >
-    Sign in
-  </Link>
-</p>
+        {/* Sign in link */}
+        <p className="text-center text-sm text-gray-500 mt-8">
+            Already have an account?{' '}
+            <Link href="/login" className="font-semibold text-purple-600 hover:text-purple-500">
+                Log in
+            </Link>
+        </p>
       </div>
     </div>
   );
