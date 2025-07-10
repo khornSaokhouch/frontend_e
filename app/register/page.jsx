@@ -78,7 +78,13 @@ const handleSubmit = async (e) => {
   }
 
   try {
-    const success = await register({ name, email, password, confirmPassword });
+    const success = await register({
+      name,
+      email,
+      password,
+      password_confirmation: confirmPassword, // ✅ important mapping
+    });
+    
 
     if (success) {
       router.push('/login');

@@ -28,8 +28,7 @@ export const useAuthStore = create(
         }
       },
 
-      // Register
-      register: async (name, email, password, password_confirmation) => {
+      register: async ({ name, email, password, password_confirmation }) => {
         set({ loading: true, error: null });
         try {
           const res = await request("/register", "POST", {
@@ -38,18 +37,19 @@ export const useAuthStore = create(
             password,
             password_confirmation,
           });
+      
           const { user, token } = res || {};
           if (!user || !token) throw new Error("Invalid registration response.");
           set({ user, token });
           return { user, token };
         } catch (err) {
-          const msg = err?.message || "Registration failed";
+          const msg = err?.response?.data?.message || err.message || "Registration failed";
           set({ error: msg });
           throw new Error(msg);
         } finally {
           set({ loading: false });
         }
-      },
+      },      
 
   //     // Fetch user using current token
   //    fetchUser: async () => {
