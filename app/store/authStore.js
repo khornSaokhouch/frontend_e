@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { request } from "../util/request"; // Make sure request handles BASE_URL correctly
+import { request } from "../util/request";
+import { useUserStore } from "./userStore"; // ✅ 1. IMPORT THE USER STORE
 
 export const useAuthStore = create(
   persist(
@@ -10,7 +11,7 @@ export const useAuthStore = create(
       loading: false,
       error: null,
 
-      // Login with email/password
+      // ... (your login, register, and loginWithToken functions are perfect, no changes needed)
       login: async (email, password) => {
         set({ loading: true, error: null });
         try {
@@ -51,22 +52,10 @@ export const useAuthStore = create(
         }
       },      
 
-  //     // Fetch user using current token
-  //    fetchUser: async () => {
-  //   set({ loading: true, error: null });
-  //   try {
-  //     const res = await request('/profile', 'GET');
-  //     set({ user: res, loading: false });
-  //   } catch (err) {
-  //     set({ error: err.message || 'Failed to fetch user', loading: false });
-  //   }
-  // },
-
-      // Used in Social Login (Google callback)
       loginWithToken: async (token) => {
         set({ loading: true, error: null });
         try {
-          set({ token }); // Save token temporarily
+          set({ token });
 
           const res = await request("/user", "GET", null, {
             Authorization: `Bearer ${token}`,
@@ -90,9 +79,15 @@ export const useAuthStore = create(
             Authorization: `Bearer ${get().token}`,
           });
         } catch (err) {
-          console.warn("Logout API failed", err);
+          console.warn("Logout API call failed, but logging out client-side.", err);
         }
+        
+        // This clears the auth store
         set({ user: null, token: null });
+
+        // ✅ 2. ADD THIS LINE TO CLEAR THE USER PROFILE STORE
+        // This is the crucial fix.
+        useUserStore.getState().clearUser();
       },
 
       // Token getter
