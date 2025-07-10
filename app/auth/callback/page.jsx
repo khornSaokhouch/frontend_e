@@ -30,7 +30,7 @@ useEffect(() => {
         } else if (user?.role === 'service_owner') {
           router.push(`/owner/${user.id}/service`);
         } else if (user?.role === 'user') {
-          router.push(`/user/${user.id}/test`); // <-- Your new route here
+          router.push(`/user/${user.id}/home`); // <-- Your new route here
         } else {
           router.push('/');
         }
