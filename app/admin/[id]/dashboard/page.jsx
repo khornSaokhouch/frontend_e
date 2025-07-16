@@ -1,128 +1,180 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { useUserStore } from '../../../store/userStore';
-import { useAuthStore } from '../../../store/authStore';
-import Link from 'next/link';
 import Image from 'next/image';
-import { Users, UserPlus, ShoppingCart, DollarSign, Loader2 } from 'lucide-react';
+import { useUserStore } from '../../../store/userStore'; // <-- 1. IMPORT YOUR STORE
+import {
+  Users,
+  Package,
+  LineChart as LineChartIcon,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  ChevronDown,
+  Loader2 // <-- 2. IMPORT THE LOADER ICON
+} from 'lucide-react';
+// For a real chart, you would install and import from a library
+// import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-/**
- * A reusable card for displaying key statistics.
- */
-const StatCard = ({ icon: Icon, title, value, color }) => {
+// --- Reusable Components (No changes needed here) ---
+
+const StatCard = ({ title, value, icon: Icon, trend, period, iconBgColor, trendColor }) => {
+  const isUp = trendColor === 'green';
+  const TrendIcon = isUp ? ArrowUp : ArrowDown;
+  const trendTextColor = isUp ? 'text-green-600' : 'text-red-500';
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-start justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <p className="text-3xl font-bold text-gray-800 mt-1">{value}</p>
+    <div className="flex flex-col justify-between bg-white p-5 rounded-xl shadow-sm border border-slate-200/80">
+      <div className="flex justify-between items-start">
+        <span className="text-sm font-medium text-slate-500">{title}</span>
+        <div className={`p-3 rounded-xl ${iconBgColor}`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
       </div>
-      <div className={`p-3 rounded-full bg-${color}-100`}>
-        <Icon className={`w-6 h-6 text-${color}-600`} />
+      <div className="mt-4">
+        <h2 className="text-3xl font-bold text-slate-800 h-10 flex items-center">{value}</h2> {/* Added height for consistency during loading */}
+        <div className="flex items-center gap-1 mt-1 text-sm">
+          <TrendIcon className={`w-4 h-4 ${trendTextColor}`} />
+          <span className={`${trendTextColor} font-semibold`}>{trend}</span>
+          <span className="text-slate-500">from {period}</span>
+        </div>
       </div>
     </div>
   );
 };
 
+const StatusPill = ({ status }) => {
+    // ... same code as before
+    const baseClasses = "px-3 py-1 text-xs font-semibold rounded-full";
+    const statusClasses = { Delivered: "bg-green-100 text-green-800", Pending: "bg-orange-100 text-orange-800", Canceled: "bg-red-100 text-red-800" };
+    return <span className={`${baseClasses} ${statusClasses[status] || 'bg-slate-100 text-slate-800'}`}>{status}</span>;
+};
+
+// Mock data for deals, can be replaced later
+const dealsData = [
+    { id: 1, productName: 'Apple Watch', productImage: '/apple-watch.png', location: '6096 Marjolaine Landing', dateTime: '12.09.2019 - 12:53 PM', piece: 423, amount: '$34,295', status: 'Delivered' },
+    // ... other deals
+];
+
+
 export default function AdminDashboard() {
-  const { user: adminUser } = useAuthStore(); // The logged-in admin
-  const { users, loading, fetchAllUsers } = useUserStore();
+  // --- 3. FETCH REAL USER DATA ---
+  const { users, loading: isLoadingUsers, fetchAllUsers } = useUserStore();
 
   useEffect(() => {
     fetchAllUsers();
   }, [fetchAllUsers]);
 
-  const getCleanImageUrl = (url) => {
-    if (!url) return '/default-avatar.png';
-    const lastHttpIndex = url.lastIndexOf('http');
-    if (lastHttpIndex > 0) return url.substring(lastHttpIndex);
-    return url;
-  };
-  
-  // Calculate total users, excluding admins
-  const totalUsers = useMemo(() => users?.filter(u => u.role !== 'admin').length ?? 0, [users]);
-  
-  // Get the 5 most recent users for the activity feed
-  const recentUsers = useMemo(() => {
-    if (!users || users.length === 0) return [];
-    return users
-      .filter(u => u.role !== 'admin')
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 5);
+  // Calculate total users from the store
+  const totalUsers = useMemo(() => {
+    if (!users) return 0;
+    // Exclude admins from the count, as in your original logic
+    return users.filter(u => u.role !== 'admin').length;
   }, [users]);
+  
+  // --- 4. CREATE DYNAMIC STATS DATA ---
+  // We use useMemo to prevent this array from being recreated on every render
+  const statsData = useMemo(() => [
+    { 
+      title: 'Total User', 
+      // Show loader while fetching, then show the real number
+      value: isLoadingUsers ? <Loader2 className="w-7 h-7 animate-spin text-slate-400" /> : totalUsers.toLocaleString(), 
+      icon: Users, 
+      trend: '8.5%', // This remains static for now, you can make it dynamic later
+      period: 'yesterday', 
+      iconBgColor: 'bg-purple-400', 
+      trendColor: 'green' 
+    },
+    // The rest of the stats are still using mock data for this example
+    { title: 'Total Order', value: '10,293', icon: Package, trend: '1.3%', period: 'past week', iconBgColor: 'bg-yellow-400', trendColor: 'green' },
+    { title: 'Total Sales', value: '$89,000', icon: LineChartIcon, trend: '4.3%', period: 'yesterday', iconBgColor: 'bg-green-400', trendColor: 'red' },
+    { title: 'Total Pending', value: '2,040', icon: Clock, trend: '1.8%', period: 'yesterday', iconBgColor: 'bg-orange-400', trendColor: 'green' },
+  ], [isLoadingUsers, totalUsers]); // Dependencies array ensures this updates only when loading state or user count changes
 
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Welcome back, {adminUser?.name}!
-        </h1>
-        <p className="mt-1 text-gray-500">Here's a snapshot of your platform today.</p>
+      <h1 className="text-4xl font-bold text-slate-800">Dashboard</h1>
+      
+      {/* Stat Cards Grid - This section now uses the dynamic statsData */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statsData.map((stat) => (
+          <StatCard
+            key={stat.title}
+            title={stat.title}
+            value={stat.value}
+            icon={stat.icon}
+            trend={stat.trend}
+            period={stat.period}
+            iconBgColor={stat.iconBgColor}
+            trendColor={stat.trendColor}
+          />
+        ))}
       </div>
       
-      {/* Stat Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={Users} title="Total Users" value={loading ? <Loader2 className="animate-spin w-6 h-6"/> : totalUsers.toLocaleString()} color="purple" />
-        {/* <StatCard icon={UserPlus} title="New Signups (30d)" value="12" color="pink" /> 
-        <StatCard icon={ShoppingCart} title="Total Orders" value="1,402" color="blue" />
-        <StatCard icon={DollarSign} title="Total Revenue" value="$27,830" color="green" /> */}
-        {/* Note: The values for Signups, Orders, and Revenue are placeholders. You would fetch this data from your backend. */}
-      </div>
-      
-      {/* Recent Activity Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Recent Registrations</h2>
-          <p className="text-sm text-gray-500 mt-1">The latest users to join your platform.</p>
+      {/* Sales Details Section (No changes here) */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200/80">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200/80">
+            <h2 className="text-xl font-semibold text-slate-800">Sales Details</h2>
+            <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50">
+                October <ChevronDown className="w-4 h-4" />
+            </button>
         </div>
-        <div className="flow-root">
-          <ul role="list" className="divide-y divide-gray-200">
-            {loading && !users.length ? (
-              // Loading Skeleton
-              [...Array(5)].map((_, i) => (
-                <li key={i} className="p-4 animate-pulse">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                </li>
-              ))
-            ) : recentUsers.length > 0 ? (
-              recentUsers.map(user => (
-                <li key={user.email} className="p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
+        <div className="p-4 sm:p-6 h-96">
+            <div className="h-full flex items-center justify-center bg-slate-50 rounded-lg">
+                <p className="text-slate-500">Chart component would be rendered here.</p>
+            </div>
+        </div>
+      </div>
+
+      {/* Deals Details Section (No changes here) */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200/80">
+        {/* ... table code remains the same ... */}
+        <div className="flex justify-between items-center p-4 sm:p-6">
+            <h2 className="text-xl font-semibold text-slate-800">Deals Details</h2>
+            <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50">
+                October <ChevronDown className="w-4 h-4" />
+            </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-slate-50 text-slate-500 font-semibold">
+              <tr>
+                <th scope="col" className="p-4">Product Name</th>
+                <th scope="col" className="p-4">Location</th>
+                <th scope="col" className="p-4">Date - Time</th>
+                <th scope="col" className="p-4">Piece</th>
+                <th scope="col" className="p-4">Amount</th>
+                <th scope="col" className="p-4">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dealsData.map((deal) => (
+                <tr key={deal.id} className="border-t border-slate-200/80 hover:bg-slate-50/50">
+                  <td className="p-4 font-medium text-slate-800">
+                    <div className="flex items-center gap-3">
                       <Image
-                        src={getCleanImageUrl(user.profile_image_url)}
-                        alt={user.name}
-                        width={40} height={40}
-                        className="rounded-full object-cover"
+                        src={deal.productImage}
+                        alt={deal.productName}
+                        width={36}
+                        height={36}
+                        className="rounded-md object-cover bg-slate-100"
                       />
+                      {deal.productName}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-                      <p className="truncate text-sm text-gray-500">{user.email}</p>
-                    </div>
-                    <div>
-                      <Link href={`/admin/${user.id}/users`} className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        View
-                      </Link>
-                    </div>
-                  </div>
-                </li>
-              ))
-            ) : (
-              // Empty State
-              <li className="p-10 text-center text-gray-500">
-                No recent user registrations to display.
-              </li>
-            )}
-          </ul>
+                  </td>
+                  <td className="p-4 text-slate-600">{deal.location}</td>
+                  <td className="p-4 text-slate-600">{deal.dateTime}</td>
+                  <td className="p-4 text-slate-600">{deal.piece}</td>
+                  <td className="p-4 text-slate-600 font-medium">{deal.amount}</td>
+                  <td className="p-4">
+                    <StatusPill status={deal.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
