@@ -31,7 +31,6 @@ export default function AuthCallbackPage() {
       const error = searchParams.get('error');
 
       if (error) {
-        console.error('Social auth failed:', error);
         router.push('/login?error=Authentication Failed');
         return;
       }
@@ -47,11 +46,9 @@ export default function AuthCallbackPage() {
             router.push(`/profile/${user.id}/myprofile`);
           }
         } catch (err) {
-          console.error('Login with token failed:', err);
           router.push('/login?error=auth_failed');
         }
       } else {
-        console.warn('No token found in callback, redirecting to login');
         router.push('/login?error=no_token');
       }
     }

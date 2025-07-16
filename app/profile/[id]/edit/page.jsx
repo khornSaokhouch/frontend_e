@@ -49,8 +49,14 @@ export default function EditProfilePage() {
   }, [id, fetchUserById]);
 
   useEffect(() => {
-    if (user) setFormData({ name: user.name || '', image: null });
+    if (user) {
+      setFormData({
+        name: user.name ?? '',
+        image: null,
+      });
+    }
   }, [user]);
+  
 
   const getCleanImageUrl = (url) => {
     if (!url) return '/default-avatar.png';
@@ -155,7 +161,7 @@ export default function EditProfilePage() {
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required />
+                  <input type="text" id="name" name="name" value={formData.name ?? ''} onChange={handleChange} className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500" required />
                 </div>
               </div>
               <div>

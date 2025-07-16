@@ -56,11 +56,13 @@ export const useAuthStore = create(
         set({ loading: true, error: null });
         try {
           set({ token });
-
-          const res = await request("/user", "GET", null, {
-            Authorization: `Bearer ${token}`,
+      
+          const res = await request("/profile", "GET", null, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           });
-
+      
           if (!res?.user) throw new Error("Failed to fetch user data.");
           set({ user: res.user });
           return res.user;
@@ -71,6 +73,7 @@ export const useAuthStore = create(
           set({ loading: false });
         }
       },
+      
 
       // Logout
       logout: async () => {

@@ -11,7 +11,7 @@ export const useUserStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const res = await request('/profile', 'GET');
-      set({ user: res, loading: false });
+       set({ user: res.user, loading: false });  // <- unwrap here
     } catch (err) {
       set({ error: err.message || 'Failed to fetch user', loading: false });
     }
@@ -21,11 +21,14 @@ export const useUserStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const res = await request(`/users/${id}`, 'GET');
-      set({ user: res, loading: false });
+      set({ user: res, loading: false }); // res is the user object itself
     } catch (err) {
+      console.error("Error fetching user:", err); // 🔥 Debug network error
       set({ error: err.message || 'Failed to fetch user', loading: false });
     }
   },
+  
+  
 
   fetchAllUsers: async () => {
     set({ loading: true, error: null });
@@ -42,16 +45,49 @@ export const useUserStore = create((set, get) => ({
   
   updateUser: async (id, updatedData) => {
     try {
-      // Note: No loading state here, as the component handles its own 'isSubmitting' state. This is fine.
       const data = await request(`/users/${id}`, 'POST', updatedData, {
         'Content-Type': 'multipart/form-data',
       });
-      // Update the user state with the fresh data from the server
-      set({ user: data }); 
+  
+      // If you updated the logged-in user, update 'user'
+      const currentUser = get().user;
+      if (currentUser && currentUser.id === id) {
+        set({ user: data });
+      }
+  
+      // If you updated the selected user (being edited/viewed), update selectedUser
+      const currentSelected = get().selectedUser;
+      if (currentSelected && currentSelected.id === id) {
+        set({ selectedUser: data });
+      }
+  
+      // Also update the users list in state (if you have one)
+      set((state) => ({
+        users: state.users.map(u => u.id === id ? data : u),
+      }));
+  
     } catch (err) {
       throw new Error(err.response?.data?.message || err.message || 'Update failed');
     }
   },
+  
+
+  deleteUser: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      await request(`/users/${id}`, 'DELETE');
+      // Remove the deleted user from the users array in state
+      set((state) => ({
+        users: state.users.filter((user) => user.id !== id),
+        loading: false,
+      }));
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      set({ error: err.message || 'Failed to delete user', loading: false });
+    }
+  },
+  
+  
   
   // ✅ UPDATED: This function now fully resets the user state
   clearUser: () => set({ user: null, loading: false, error: null }),

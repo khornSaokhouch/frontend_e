@@ -41,8 +41,8 @@ export default function LoginPage() {
       const { user } = await login(email, password);
       if (user.role === 'admin') {
         router.push(`/admin/${user.id}/dashboard`);
-      } else if (user.role === 'owner') {
-        router.push(`/owner/${user.id}/bookings`);
+      } else if (user.role === 'company') {
+        router.push(`/company/${user.id}/dashboard`);
       } else {
         router.push(`/profile/${user.id}/myprofile`);
       }
