@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, Search, Bell, ChevronDown, UserCircle, LogOut } from 'lucide-react';
+import { useNotificationsStore } from '../../store/useNotificationsStore'; // Import from store
+import toast from 'react-hot-toast'; // Import toast
 
 // A simple SVG component for the US Flag. For a real app, you might use a library like 'react-flags-select'.
 const UsaFlagIcon = () => (
@@ -12,7 +14,7 @@ const UsaFlagIcon = () => (
     <path fill="#b22234" d="M0 0h7410v3900H0z"/>
     <path d="M0 450h7410v300H0zm0 600h7410v300H0zm0 600h7410v300H0zm0 600h7410v300H0z" fill="#fff"/>
     <path fill="#3c3b6e" d="M0 0h3960v2100H0z"/>
-    <path d="m198 210-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 420l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 630l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 840l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 1050l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 1260l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 1470l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 1680l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 1890l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114z" fill="#fff"/>
+    <path d="m198 210-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 420l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 630l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 840l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 1050l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 1260l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 1470l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM498 1680l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zM198 1890l-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114zm600 0-61 185 159-114h-196l159 114z" fill="#fff"/>
   </svg>
 );
 
@@ -33,15 +35,30 @@ const DropdownMenu = ({ children, open, className }) => (
   </AnimatePresence>
 );
 
-export default function Header({ user, loading, onMenuButtonClick, onLogoutClick, adminId }) {
+export default function Header({ user, loading, onMenuButtonClick, onLogoutClick, adminId, notificationCount, clearUnreadCount }) {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isLanguageOpen, setLanguageOpen] = useState(false);
-  
+  const fetchNotifications = useNotificationsStore(state => state.fetchNotifications); // Use fetchNotifications
+  const markEmailRead = useNotificationsStore(state => state.markEmailRead); // Access markEmailRead
+  const emails = useNotificationsStore(state => state.emails);  // Access emails
+
+
   const getCleanImageUrl = (url) => {
     if (!url) return '/default-avatar.png'; // Make sure you have a default avatar in /public
     const lastHttpIndex = url.lastIndexOf('http');
     return lastHttpIndex > 0 ? url.substring(lastHttpIndex) : url;
   };
+
+  useEffect(() => {
+    fetchNotifications(); // Fetch initially
+  }, [fetchNotifications]); // only add fetchNotification on dependency array
+
+
+    const handleViewNotifications = () => {
+        clearUnreadCount();
+    };
+
+  const bellHref = `/admin/${adminId}/inbox`;  // Define your inbox URL
 
   return (
     <header className="sticky top-0 z-20 flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8">
@@ -70,10 +87,22 @@ export default function Header({ user, loading, onMenuButtonClick, onLogoutClick
 
       {/* --- Right Side --- */}
       <div className="flex items-center gap-3 sm:gap-4">
-<Link href={`/admin/${adminId}/inbox`} className="relative rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-  <Bell className="h-6 w-6" />
-  <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-red-500 ring-1 ring-white" />
-</Link>
+      <Link
+         href={bellHref} // Use the defined href
+            className="relative rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            onClick={handleViewNotifications}
+        >
+            <Bell className="h-6 w-6" />
+            {notificationCount > 0 && (
+                <span
+                    className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white"
+                    aria-label={`${notificationCount} new notifications`}
+                >
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                </span>
+            )}
+        </Link>
+
 
         {/* Language Switcher */}
         <div className="relative">

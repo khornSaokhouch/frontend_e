@@ -16,14 +16,17 @@ import {
   FileText,
   Settings,
   LogOut,
+  HomeIcon,
+  CassetteTapeIcon,
 } from 'lucide-react';
 
 // --- Data for the links ---
 const mainLinks = [
   { href: 'dashboard', label: 'Dashboard', icon: Clock },
   { href: 'users', label: 'Users', icon:   Users },
+  { href: 'company', label: 'Company', icon: HomeIcon },
   { href: 'products', label: 'Products', icon: Package },
-  { href: 'favorites', label: 'Favorites', icon: Heart },
+  { href: 'category', label: 'Category', icon: CassetteTapeIcon },
   { href: 'inbox', label: 'Inbox', icon: Inbox },
   { href: 'orders', label: 'Order Lists', icon: ClipboardList },
   { href: 'stock', label: 'Product Stock', icon: Archive },

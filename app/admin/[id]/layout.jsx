@@ -8,7 +8,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Header from '../../components/admin/Header';     // Adjust path if needed
-import Sidebar from '../../components/admin/Sidebar';   // Adjust path if needed
+import Sidebar from '../../components/admin/Sidebar';  
+import { useNotificationsStore } from '../../store/useNotificationsStore'; // Adjust path // Adjust path if needed
 
 // ConfirmationModal can remain the same as you had before.
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children, confirmText = 'Confirm' }) => {
@@ -42,26 +43,38 @@ export default function AdminLayout({ children }) {
   const { id: adminId } = useParams();
   const router = useRouter();
 
-  const user = useUserStore((state) => state.user);
-  const fetchUser = useUserStore((state) => state.fetchUser);
-  const loadingUser = useUserStore((state) => state.loading);
+  const user = useUserStore(state => state.user);
+  const fetchUser = useUserStore(state => state.fetchUser);
+  const loadingUser = useUserStore(state => state.loading);
   const { logout } = useAuthStore();
-  
+
+  const emails = useNotificationsStore(state => state.emails);
+  const unreadCount = useNotificationsStore(state => state.unreadCount);
+  const fetchNotifications = useNotificationsStore(state => state.fetchNotifications);
+  const clearUnreadCount = useNotificationsStore(state => state.clearUnreadCount);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
-    if(!user) {
-      fetchUser();
-    }
+    if (!user) fetchUser();
   }, [fetchUser, user]);
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
   const handleLogout = () => {
-    setIsLogoutModalOpen(false); // Close modal first
+    setIsLogoutModalOpen(false);
     logout();
     toast.success("You have been logged out.");
     router.push('/login');
   };
+
+  const handleViewNotifications = () => {
+    clearUnreadCount();
+  };
+  
 
   return (
     <>
@@ -110,13 +123,15 @@ export default function AdminLayout({ children }) {
 
         {/* --- MAIN CONTENT & HEADER --- */}
         <div className="flex flex-1 flex-col md:pl-64">
-          <Header 
-            user={user}
-            loading={loadingUser}
-            adminId={adminId}
-            onMenuButtonClick={() => setSidebarOpen(true)}
-            onLogoutClick={() => setIsLogoutModalOpen(true)}
-          />
+        <Header
+        user={user}
+        loading={loadingUser}
+        adminId={adminId}
+        notificationCount={unreadCount}
+        onMenuButtonClick={() => setSidebarOpen(true)}
+        onLogoutClick={() => setIsLogoutModalOpen(true)}
+      />
+
 
           <main className="flex-1">
             <div className="py-8 px-4 sm:px-6 lg:px-8">
