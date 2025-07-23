@@ -7,20 +7,36 @@ export const useUserStore = create((set, get) => ({
   loading: false,
   error: null,
 
+  // fetchUser: async () => {
+  //   set({ loading: true, error: null });
+  //   try {
+  //     const res = await request('/profile', 'GET');
+  //      set({ user: res.user, loading: false });  // <- unwrap here
+  //   } catch (err) {
+  //     set({ error: err.message || 'Failed to fetch user', loading: false });
+  //   }
+  // },
+
   fetchUser: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await request('/profile', 'GET');
-       set({ user: res.user, loading: false });  // <- unwrap here
+      const res = await request('/profile', 'GET'); // endpoint for current logged-in user info
+      set({ user: res.user, loading: false });
+      return res.user;
     } catch (err) {
-      set({ error: err.message || 'Failed to fetch user', loading: false });
+      set({
+        error: err.response?.data?.message || err.message || 'Failed to fetch user',
+        loading: false,
+      });
+      return null;
     }
   },
+  
 
   fetchUserById: async (id) => {
     set({ loading: true, error: null });
     try {
-      const res = await request(`/users/${id}`, 'GET');
+      const res = await request(`/users/${id}`, 'GET', null, true);
       set({ user: res, loading: false }); // res is the user object itself
     } catch (err) {
       console.error("Error fetching user:", err); // 🔥 Debug network error

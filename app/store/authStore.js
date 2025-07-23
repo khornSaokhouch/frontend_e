@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { request } from "../util/request";
-import { useUserStore } from "./userStore"; // ✅ 1. IMPORT THE USER STORE
+import { useUserStore } from "./userStore";
 
 export const useAuthStore = create(
   persist(
@@ -11,9 +11,11 @@ export const useAuthStore = create(
       loading: false,
       error: null,
 
-      // ... (your login, register, and loginWithToken functions are perfect, no changes needed)
       login: async (email, password) => {
+        // 👇 clear previous user/token before login
+        set({ user: null, token: null });
         set({ loading: true, error: null });
+
         try {
           const res = await request("/login", "POST", { email, password });
           const { user, token } = res || {};
@@ -31,6 +33,7 @@ export const useAuthStore = create(
 
       register: async ({ name, email, password, password_confirmation }) => {
         set({ loading: true, error: null });
+
         try {
           const res = await request("/register", "POST", {
             name,
@@ -38,7 +41,7 @@ export const useAuthStore = create(
             password,
             password_confirmation,
           });
-      
+
           const { user, token } = res || {};
           if (!user || !token) throw new Error("Invalid registration response.");
           set({ user, token });
@@ -50,19 +53,20 @@ export const useAuthStore = create(
         } finally {
           set({ loading: false });
         }
-      },      
+      },
 
       loginWithToken: async (token) => {
         set({ loading: true, error: null });
+
         try {
           set({ token });
-      
+
           const res = await request("/profile", "GET", null, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-      
+
           if (!res?.user) throw new Error("Failed to fetch user data.");
           set({ user: res.user });
           return res.user;
@@ -73,9 +77,7 @@ export const useAuthStore = create(
           set({ loading: false });
         }
       },
-      
 
-      // Logout
       logout: async () => {
         try {
           await request("/logout", "POST", null, {
@@ -84,21 +86,20 @@ export const useAuthStore = create(
         } catch (err) {
           console.warn("Logout API call failed, but logging out client-side.", err);
         }
-        
-        // This clears the auth store
+
+        // Clear auth store
         set({ user: null, token: null });
 
-        // ✅ 2. ADD THIS LINE TO CLEAR THE USER PROFILE STORE
-        // This is the crucial fix.
+        // Also clear the user store
         useUserStore.getState().clearUser();
       },
 
-      // Token getter
       getToken: () => get().token,
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => localStorage),
+      // ✅ use sessionStorage instead of localStorage
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ token: state.token, user: state.user }),
     }
   )

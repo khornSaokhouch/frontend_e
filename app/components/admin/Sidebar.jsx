@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Clock,
   Package,
@@ -17,56 +17,80 @@ import {
   Settings,
   LogOut,
   HomeIcon,
-  CassetteTapeIcon,
-} from 'lucide-react';
+  CassetteTape as CassetteTapeIcon, // Fixed to CassetteTape as CassetteTapeIcon
+} from "lucide-react";
+import { motion } from "framer-motion";
 
 // --- Data for the links ---
 const mainLinks = [
-  { href: 'dashboard', label: 'Dashboard', icon: Clock },
-  { href: 'users', label: 'Users', icon:   Users },
-  { href: 'company', label: 'Company', icon: HomeIcon },
-  { href: 'products', label: 'Products', icon: Package },
-  { href: 'category', label: 'Category', icon: CassetteTapeIcon },
-  { href: 'inbox', label: 'Inbox', icon: Inbox },
-  { href: 'orders', label: 'Order Lists', icon: ClipboardList },
-  { href: 'stock', label: 'Product Stock', icon: Archive },
+  { href: "dashboard", label: "Dashboard", icon: Clock },
+  { href: "users", label: "Users", icon: Users },
+  {
+    href: "company",
+    label: "Company",
+    icon: HomeIcon,
+    children: [
+      { href: "company/company_info", label: "Company_info" },
+    ],
+  },
+  { href: "products", label: "Products", icon: Package },
+  { href: "category", label: "Category", icon: CassetteTapeIcon }, // use CassetteTapeIcon here
+  { href: "inbox", label: "Inbox", icon: Inbox },
+  { href: "status", label: "Status", icon: Archive },
+  { href: "orders", label: "Order Lists", icon: ClipboardList },
+  { href: "stock", label: "Product Stock", icon: Archive },
 ];
 
 const pageLinks = [
-  { href: 'pricing', label: 'Pricing', icon: Tag },
-  { href: 'calendar', label: 'Calender', icon: Calendar },
-  { href: 'todo', label: 'To-Do', icon: CheckSquare },
-  { href: 'contact', label: 'Contact', icon: Users },
-  { href: 'invoice', label: 'Invoice', icon: FileText },
+  { href: "pricing", label: "Pricing", icon: Tag },
+  { href: "calendar", label: "Calender", icon: Calendar },
+  { href: "todo", label: "To-Do", icon: CheckSquare },
+  { href: "contact", label: "Contact", icon: Users },
+  { href: "invoice", label: "Invoice", icon: FileText },
   // Add more pages as needed
 ];
 
 // --- Reusable Nav Item Component ---
-const NavItem = ({ href, icon: Icon, label, isActive }) => {
+const NavItem = ({ href, icon, label, isActive }) => {
+  const IconComponent = icon; // Assign the icon to a variable
+
   return (
     <Link
       href={href}
       className={`flex items-center gap-4 px-4 py-3 rounded-lg font-medium transition-colors ${
         isActive
-          ? 'bg-indigo-600 text-white'
-          : 'text-slate-700 hover:bg-slate-100'
+          ? "bg-indigo-600 text-white"
+          : "text-slate-700 hover:bg-slate-100"
       }`}
     >
-      <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-white' : 'text-slate-500'}`} />
+      {IconComponent && <IconComponent className={`h-5 w-5 transition-colors ${isActive ? "text-white" : "text-slate-500"}`} />} {/* Render icon only if it exists */}
       <span>{label}</span>
     </Link>
   );
 };
 
-
-export default function Sidebar({ adminId, onLogoutClick }) { // Added onLogoutClick prop
+export default function Sidebar({ adminId, onLogoutClick }) {
+  // Added onLogoutClick prop
   const pathname = usePathname();
 
   // Helper to construct full URLs
   const createHref = (slug) => `/admin/${adminId}/${slug}`;
 
+  // Animation Variants for Menu Items
+  const menuItemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut",
+      },
+    },
+  };
+
   return (
-    <div className="flex h-full flex-col bg-white">
+    <motion.div className="flex h-full flex-col bg-white">
       {/* Sidebar Header: Logo */}
       <div className="flex h-20 flex-shrink-0 items-center justify-center border-b border-slate-200 px-4">
         <Link href="/" className="transition-opacity hover:opacity-80">
@@ -81,13 +105,28 @@ export default function Sidebar({ adminId, onLogoutClick }) { // Added onLogoutC
       <div className="flex-1 overflow-y-auto p-4">
         <nav className="flex flex-col gap-1">
           {mainLinks.map((link) => (
-            <NavItem
-              key={link.label}
-              href={createHref(link.href)}
-              icon={link.icon}
-              label={link.label}
-              isActive={pathname === createHref(link.href)}
-            />
+            <div key={link.label}>
+              <NavItem
+                href={createHref(link.href)}
+                icon={link.icon}
+                label={link.label}
+                isActive={pathname === createHref(link.href)}
+              />
+              {link.children && (
+                <nav className="ml-6 flex flex-col gap-1">
+                  {link.children.map((child) => (
+                    <NavItem
+                      key={child.label}
+                      href={createHref(child.href)}
+                      label={child.label}
+                      isActive={pathname === createHref(child.href)}
+                      // Optional: Add icon if children have icons, else omit
+                      icon={child.icon}
+                    />
+                  ))}
+                </nav>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -114,10 +153,10 @@ export default function Sidebar({ adminId, onLogoutClick }) { // Added onLogoutC
       <div className="border-t border-slate-200 p-4">
         <nav className="flex flex-col gap-1">
           <NavItem
-            href={createHref('settings')}
+            href={createHref("settings")}
             icon={Settings}
             label="Settings"
-            isActive={pathname === createHref('settings')}
+            isActive={pathname === createHref("settings")}
           />
           {/* Logout is a button, not a link */}
           <button
@@ -129,6 +168,6 @@ export default function Sidebar({ adminId, onLogoutClick }) { // Added onLogoutC
           </button>
         </nav>
       </div>
-    </div>
+    </motion.div>
   );
 }

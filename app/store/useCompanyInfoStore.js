@@ -1,138 +1,137 @@
 import { create } from 'zustand';
-import { request } from '../util/request'; // Adjust if needed
+import { request } from '../util/request';
 
 export const useCompanyInfoStore = create((set, get) => ({
-  companyData: null,
-  originalData: null,
+  companies: [],
+  company: null,
   loading: false,
   error: null,
-  success: null,
 
-  fetchCompanyInfo: async (id) => {
-    if (!id || id === 'new') {
-      // Initialize empty data for new company
-      set({
-        companyData: {
-          company_name: '',
-          description: '',
-          website_url: '',
-          business_hours: '',
-          location: {
-            address: '',
-            city: '',
-            country: '',
-          },
-          social_links: {
-            facebook: '',
-            instagram: '',
-            twitter: '',
-            linkedin: '',
-          },
-          company_image: '',
+  // Update a specific field in the company object
+  setFieldValue: (field, value) =>
+    set((state) => ({
+      company: {
+        ...state.company,
+        [field]: value,
+      },
+    })),
+
+  // Generic input handler
+  handleInputChange: (e) => {
+    const { name, value, files, type } = e.target;
+    if (type === 'file') {
+      const file = files && files[0] ? files[0] : null;
+      set((state) => ({
+        company: {
+          ...state.company,
+          [name]: file,
         },
-        originalData: null,
-        loading: false,
-        error: null,
-        success: null,
-      });
-      return;
+      }));
+    } else {
+      set((state) => ({
+        company: {
+          ...state.company,
+          [name]: value,
+        },
+      }));
     }
+  },
 
+  // Fetch all companies
+  fetchCompanies: async () => {
     set({ loading: true, error: null });
     try {
-      const data = await request(`/companies/${id}`, 'GET');
-      set({
-        companyData: JSON.parse(JSON.stringify(data)),
-        originalData: JSON.parse(JSON.stringify(data)),
-        loading: false,
-        success: null,
-      });
+      const res = await request(`/companies`, 'GET');
+      set({ companies: res.companies, loading: false });
     } catch (err) {
-      set({
-        error: err.response?.data?.message || err.message || 'Failed to fetch company info.',
-        loading: false,
-      });
+      set({ error: err.message || 'Failed to fetch companies', loading: false });
     }
   },
 
-  setFieldValue: (path, value) => {
-    const current = JSON.parse(JSON.stringify(get().companyData));
-    const keys = path.split('.');
-    let obj = current;
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (!obj[keys[i]]) obj[keys[i]] = {};
-      obj = obj[keys[i]];
-    }
-    obj[keys[keys.length - 1]] = value;
-    set({ companyData: current });
-  },
-
-  saveCompanyInfo: async () => {
-    const { companyData, originalData } = get();
-
-    if (!companyData) {
-      set({ error: 'No company data to save.' });
-      return;
-    }
-
-    set({ loading: true, error: null, success: null });
-
-    try {
-      let saved;
-      if (originalData) {
-        // Update existing company
-        saved = await request(`/companies/${companyData.id}`, 'PUT', companyData);
-      } else {
-        // Create new company
-        saved = await request('/companies', 'POST', companyData);
+    fetchCompanyByUserId: async (id) => {
+      set({ loading: true, error: null });
+      try {
+        const res = await request(`/companies/${id}`, 'GET');
+        set({ company: res, loading: false }); // ✅ if no `res.company`
+      } catch (err) {
+        set({ error: err.message || 'Failed to fetch company', loading: false });
       }
+    },
+  
 
-      set({
-        companyData: JSON.parse(JSON.stringify(saved)),
-        originalData: JSON.parse(JSON.stringify(saved)),
-        loading: false,
-        success: originalData ? 'Company info updated successfully.' : 'Company created successfully.',
+  // Create a company
+  createCompany: async (data) => {
+    set({ loading: true, error: null });
+    try {
+      const formData = new FormData();
+  
+      for (const key in data) {
+        if (data[key] !== null && data[key] !== undefined) {
+          if (key === 'company_image') {
+            console.log("Appending image:", data[key], typeof data[key]);
+          }
+          formData.append(key, data[key]);
+        }
+      }
+  
+      const res = await request('/companies', 'POST', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data', // May be auto-set by browser
+        },
       });
+  
+      set({ company: res.company ?? res, loading: false });
     } catch (err) {
-      set({
-        error: err.response?.data?.message || err.message || 'Failed to save company.',
-        loading: false,
-      });
+      set({ error: err.message || 'Failed to create company', loading: false });
     }
   },
+  
 
-  revertChanges: () => {
-    const original = get().originalData;
-    if (original) {
-      set({
-        companyData: JSON.parse(JSON.stringify(original)),
-        error: null,
-        success: null,
-      });
-    } else {
-      // Reset form for new company
-      set({
-        companyData: {
-          company_name: '',
-          description: '',
-          website_url: '',
-          business_hours: '',
-          location: {
-            address: '',
-            city: '',
-            country: '',
-          },
-          social_links: {
-            facebook: '',
-            instagram: '',
-            twitter: '',
-            linkedin: '',
-          },
-          company_image: '',
-        },
-        error: null,
-        success: null,
-      });
+  updateCompany: async (id, data) => {
+    set({ loading: true, error: null });
+  
+    try {
+      const formData = new FormData();
+  
+      for (const key in data) {
+        const value = data[key];
+  
+        if (key === 'company_image') {
+          if (value instanceof File) {
+            formData.append(key, value);
+          } else {
+            // skip company_image if not a File (do not send invalid values)
+            console.log('Skipping company_image: not a valid File');
+          }
+        } else if (value !== null && value !== undefined) {
+          formData.append(key, value);
+        }
+      }
+  
+      formData.append('_method', 'PUT');
+  
+      const res = await request(`/companies/${id}`, 'POST', formData);
+  
+      set({ company: res.company, loading: false });
+    } catch (err) {
+      console.error("Update error:", err);
+      if (err.response && err.response.data) {
+        console.error("Backend validation errors:", err.response.data);
+      }
+      set({ error: err.message || 'Failed to update company', loading: false });
+    }
+  },
+  
+  
+
+  // Delete a company
+  deleteCompany: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      await request(`/companies/${id}`, 'DELETE');
+      set({ loading: false });
+    } catch (err) {
+      set({ error: err.message || 'Failed to delete company', loading: false });
     }
   },
 }));

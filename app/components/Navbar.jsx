@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAuthStore } from "../store/authStore";
 import { useUserStore } from "../store/userStore";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   Search,
   MapPin,
@@ -62,6 +62,7 @@ const TechLogoIcon = (props) => (
 );
 
 export default function Navbar() {
+  const { id } = useParams();
   const router = useRouter();
   const { user: authUser } = useAuthStore();
   const { user: userProfile, fetchUserById } = useUserStore();
@@ -89,12 +90,18 @@ export default function Navbar() {
     ? getCleanImageUrl(userProfile.profile_image_url)
     : "/default-avatar.png";
 
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "Products", href: id ? `/user/${authUser?.id}/products` : "/products" },
+    { label: "About Us", href: "/about" },
+  ];
+
   return (
-    <div className="w-full p-4 font-sans">
-      <header className="bg-white w-full max-w-screen-xl mx-auto rounded-xl shadow-lg px-4 sm:px-6 lg:px-8">
+    <div className="w-full p-2 font-sans">
+      <header className="bg-white w-full max-w-screen-2xl mx-auto rounded-xl shadow-lg px-4 py-4 sm:px-6 lg:px-8">
         {/* Top Row - Compact Layout */}
         <div className="flex items-center justify-between h-16">
-          {/* Mobile Menu Button (moved to left) and Logo */}
+          {/* Mobile Menu Button, Logo, & Navigation Items */}
           <div className="flex items-center">
             {/* Mobile Menu Button */}
             <button
@@ -104,13 +111,35 @@ export default function Navbar() {
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-1">
-              <TechLogoIcon className="h-6 w-6" />
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text whitespace-nowrap">
-                E-COMMERCES
-              </span>
-            </Link>
+            {/* Logo & Navigation Items */}
+            <div className="flex items-center gap-8">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-1">
+                <TechLogoIcon className="h-6 w-6" />
+                <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text whitespace-nowrap">
+                  E-COMMERCES
+                </span>
+              </Link>
+
+              {/* Navigation Items (Visible on larger screens) */}
+              <div className="hidden md:flex items-center gap-6">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="hover:text-pink-600 transition-colors whitespace-nowrap"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <Link
+                  href={id ? `/user/${authUser?.id}/become-a-company` : "/login"}
+                  className="hover:text-pink-600 transition-colors whitespace-nowrap"
+                >
+                  Become a seller
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Search Bar - Responsive Width */}
@@ -136,7 +165,7 @@ export default function Navbar() {
                 {/* Icons and Profile Image on Small Screens */}
                 <div className="sm:hidden flex items-center space-x-2">
                   <Link
-                    href="/favorites"
+                    href={`/user/${authUser?.id}/favorites`}
                     title="Favorites"
                     className="text-gray-600 hover:text-gray-800"
                   >
@@ -169,7 +198,7 @@ export default function Navbar() {
                 {/* Icons on Larger Screens */}
                 <div className="hidden sm:flex items-center gap-4">
                   <Link
-                    href="/favorites"
+                    href={`/user/${authUser?.id}/favorites`}
                     title="Favorites"
                     className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
                   >
@@ -239,30 +268,17 @@ export default function Navbar() {
             </div>
 
             <nav className="flex flex-col items-start gap-4">
-              <Link href="/" className="hover:text-pink-600 transition-colors">
-                Home
-              </Link>
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="hover:text-pink-600 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
               <Link
-                href="/store"
-                className="hover:text-pink-600 transition-colors"
-              >
-                Store
-              </Link>
-              <Link
-                href="/faq"
-                className="hover:text-pink-600 transition-colors"
-              >
-                FQA
-              </Link>
-              <Link
-                href="/orders"
-                className="flex items-center gap-2 hover:text-pink-600 transition-colors"
-              >
-                <Package className="h-5 w-5 text-gray-500" />
-                <span>Orders</span>
-              </Link>
-              <Link
-                href={`/user/${authUser?.id}/become-a-company`}
+                href={id ? `/user/${authUser?.id}/become-a-company` : "/login"}
                 className="hover:text-pink-600 transition-colors"
               >
                 Become a seller
@@ -272,46 +288,6 @@ export default function Navbar() {
         )}
 
         {/* Desktop Navigation (Hidden on Small Screens) */}
-        <nav className="hidden md:flex items-center justify-between h-14 text-sm font-bold text-gray-800">
-          <div className="flex items-center gap-10">
-            <div className="flex items-center gap-2 text-gray-600 font-medium">
-              <MapPin className="h-5 w-5 flex-shrink-0" />
-              <span>Cambodia</span>
-            </div>
-            <div className="flex items-center gap-8">
-              <Link href="/" className="hover:text-pink-600 transition-colors">
-                Home
-              </Link>
-              <Link
-                href="/store"
-                className="hover:text-pink-600 transition-colors"
-              >
-                Store
-              </Link>
-              <Link
-                href="/faq"
-                className="hover:text-pink-600 transition-colors"
-              >
-                FQA
-              </Link>
-              <Link
-                href="/orders"
-                className="flex items-center gap-2 hover:text-pink-600 transition-colors"
-              >
-                <Package className="h-5 w-5 text-gray-500" />
-                <span>Orders</span>
-              </Link>
-            </div>
-          </div>
-          <div>
-            <Link
-              href={`/user/${authUser?.id}/become-a-company`}
-              className="hover:text-pink-600 transition-colors whitespace-nowrap"
-            >
-              Become a seller
-            </Link>
-          </div>
-        </nav>
       </header>
     </div>
   );

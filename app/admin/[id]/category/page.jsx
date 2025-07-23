@@ -13,8 +13,11 @@ import {
   Loader2,
   Archive,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 export default function CategoriesPage() {
+  const { id } = useParams(); // Assuming you have a way to get the current admin ID
   // --- All your existing state and logic remains the same ---
   const {
     categories,
@@ -176,29 +179,43 @@ export default function CategoriesPage() {
                   </div>
                 ) : (
                   <ul className="divide-y divide-slate-200">
-                    {filteredCategories.map((cat) => (
-                      <li key={cat.id} className="flex justify-between items-center py-4 px-2 hover:bg-slate-50 rounded-md transition-colors">
-                        <div className="flex items-center gap-4">
-                          {cat.image_url ? (
-                            <img src={cat.image_url} alt={cat.name} className="h-12 w-12 object-cover rounded-md bg-slate-100" />
-                          ) : (
-                            <div className="h-12 w-12 flex items-center justify-center bg-slate-100 rounded-md">
-                                <ImageIcon className="h-6 w-6 text-slate-400" />
-                            </div>
-                          )}
-                          <span className="font-medium text-slate-700">{cat.name}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => openForm(cat)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors">
-                            <Edit size={18} />
-                          </button>
-                          <button onClick={() => setDeleteConfirmId(cat.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  {filteredCategories.map((cat) => (
+                    <li
+                      key={cat.id}
+                      className="flex justify-between items-center py-4 px-2 hover:bg-slate-50 rounded-md transition-colors"
+                    >
+                     <Link href={`/admin/${id}/category/${cat.id}`} className="flex items-center gap-4 flex-1">
+                        {cat.image_url ? (
+                          <img
+                            src={cat.image_url}
+                            alt={cat.name}
+                            className="h-12 w-12 object-cover rounded-md bg-slate-100"
+                          />
+                        ) : (
+                          <div className="h-12 w-12 flex items-center justify-center bg-slate-100 rounded-md">
+                            <ImageIcon className="h-6 w-6 text-slate-400" />
+                          </div>
+                        )}
+                        <span className="font-medium text-slate-700">{cat.name}</span>
+                      </Link>
+                
+                      <div className="flex gap-2 ml-2">
+                        <button
+                          onClick={() => openForm(cat)}
+                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(cat.id)}
+                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
                 )}
               </>
             )}

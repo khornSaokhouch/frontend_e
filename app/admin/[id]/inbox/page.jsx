@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Pencil,
   Inbox,
@@ -23,11 +23,9 @@ import toast, { Toaster } from "react-hot-toast"; // Import toast and Toaster
 
 const EmailSidebar = ({ activeFolder, setActiveFolder, emailFolders }) => (
   <aside className="w-64 flex-shrink-0 border-r border-slate-200 p-4 flex flex-col">
-    <button className="flex items-center justify-center gap-2 w-full bg-blue-500 text-white font-semibold py-3 rounded-lg hover:bg-blue-600 transition-colors">
-      <Pencil className="w-5 h-5" />
-      Compose
-    </button>
-
+   <div>
+   <h1 className="text-3xl font-bold text-slate-800 py-3 text-center">Inbox</h1>
+   </div>
     <div className="mt-6">
       <h3 className="px-2 text-xs font-semibold text-slate-500 uppercase">
         My Email
@@ -107,7 +105,7 @@ const EmailListItem = ({ email, onSelect, isSelected }) => (
   </motion.div>
 );
 
-const EmailDetails = ({ email, onClose, handleAction }) => {
+const EmailDetails = ({ email, onClose, handleAction, refetchEmail }) => {
   if (!email) {
     return (
       <div className="p-6 text-center text-slate-500">
@@ -117,7 +115,8 @@ const EmailDetails = ({ email, onClose, handleAction }) => {
   }
 
   const data = email.data || {};
-  const sellerStatus = data.status; // Get the status from email.data
+  const sellerStatus = data.status ? data.status.trim().toLowerCase() : null; // Normalize status
+  const sellerId = data.seller_id;
 
   return (
     <motion.div
@@ -174,30 +173,24 @@ const EmailDetails = ({ email, onClose, handleAction }) => {
         </p>
 
         <div className="flex gap-3 mt-6">
-          <button
-            onClick={() => handleAction("approved", data.seller_id)}
-            className={`py-2 px-4 rounded ${
-              sellerStatus === 'approved'
-                ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600 text-white font-bold'
-            }`}
-            disabled={sellerStatus === 'approved'}
-          >
-            {sellerStatus === 'approved' ? 'Approved' : 'Approve Seller'}
-          </button>
-          <button
-            onClick={() => handleAction("rejected", data.seller_id)}
-            className={`py-2 px-4 rounded ${
-              sellerStatus === 'rejected'
-                ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                : 'bg-red-500 hover:bg-red-600 text-white font-bold'
-            }`}
-            disabled={sellerStatus === 'rejected'}
-          >
-            {sellerStatus === 'rejected' ? 'Rejected' : 'Reject Seller'}
-          </button>
+          {/* Use optional chaining and ensure sellerId is valid */}
+          {sellerStatus !== 'approved' && sellerId && (
+            <button
+              onClick={() => handleAction("approved", sellerId)}
+              className="py-2 px-4 rounded bg-green-500 hover:bg-green-600 text-white font-bold"
+            >
+              Approve Seller
+            </button>
+          )}
+          {sellerStatus !== 'rejected' && sellerId && (
+            <button
+              onClick={() => handleAction("rejected", sellerId)}
+              className="py-2 px-4 rounded bg-red-500 hover:bg-red-600 text-white font-bold"
+            >
+              Reject Seller
+            </button>
+          )}
         </div>
-
 
         <div className="text-center text-xs text-slate-500 mt-8">
           This notification relates to a new seller request. For more
@@ -212,35 +205,73 @@ const EmailDetails = ({ email, onClose, handleAction }) => {
 export default function InboxPage() {
   const [activeFolder, setActiveFolder] = useState("inbox");
   const [selectedEmail, setSelectedEmail] = useState(null);
+  const [emailsWithStatus, setEmailsWithStatus] = useState([]); // Store emails with status
+  // const [refetchKey, setRefetchKey] = useState(0); // Track changes to trigger refetch
 
   const { emails, loading, error, fetchNotifications } = useNotificationsStore();
   const { approveCompany, rejectCompany } = useCompanyStore();
 
-  useEffect(() => {
-    fetchNotifications();
+  // Use useCallback to memoize fetchNotifications
+  const memoizedFetchNotifications = useCallback(() => {
+      fetchNotifications();
   }, [fetchNotifications]);
+
+
+  useEffect(() => {
+    memoizedFetchNotifications();
+  }, [memoizedFetchNotifications]);
+
+  //Update the emails with status
+  useEffect(() => {
+    // Function to apply status updates to emails
+    const applyStatusUpdates = () => {
+        if (!emails || emails.length === 0) {
+            return;
+        }
+
+        const updatedEmails = emails.map(email => {
+          if (email.data && email.data.status) {
+            // Normalize the status to lowercase for consistent comparisons
+            const normalizedStatus = email.data.status.trim().toLowerCase();
+            return {
+              ...email,
+              data: {
+                ...email.data,
+                status: normalizedStatus // Update with normalized status
+              }
+            };
+          }
+          return email;
+        });
+        // Update state with status value
+        setEmailsWithStatus(updatedEmails);
+    };
+    applyStatusUpdates();
+  }, [emails]);
 
   const handleAction = async (action, sellerId) => {
     const loadingToast = toast.loading('Updating Email...');
     try {
       if (action === "approved") {
         await approveCompany(sellerId);
-        setSelectedEmail(null);
-        toast.success(`Seller ${sellerId} approved!`, { id: loadingToast }); // Using react-hot-toast
+        toast.success(`Seller ${sellerId} approved!`, { id: loadingToast });
       } else if (action === "rejected") {
         await rejectCompany(sellerId);
-        setSelectedEmail(null);
-        toast.success(`Seller ${sellerId} rejected!`,{ id: loadingToast }); // Using react-hot-toast
+        toast.success(`Seller ${sellerId} rejected!`,{ id: loadingToast });
       }
+      await fetchNotifications();
+      setSelectedEmail(null); // Clear selected email after action
     } catch (err) {
-      // console.error(`Error performing action ${action} for seller ${sellerId}:`, err);
-      if (err.response) {
-        console.error("Error response data:", err.response.data);
-        console.error("Error response status:", err.response.status);
-        console.error("Error response headers:", err.response.headers);
-      }
-      toast.error(`Failed to ${action} seller: ${err.message}`); // Using react-hot-toast
+      console.error(`Error performing action ${action} for seller ${sellerId}:`, err);
+      toast.error(`Failed to ${action} seller: ${err.message}`);
+    } finally {
+      toast.dismiss(loadingToast); // Dismiss loading state
     }
+  };
+
+  // Function to refetch a single email (not used in this simplified example)
+  const refetchEmail = async () => {
+      memoizedFetchNotifications();
   };
 
   const emailFolders = [
@@ -248,13 +279,13 @@ export default function InboxPage() {
       name: "Inbox",
       slug: "inbox",
       icon: Inbox,
-      count: emails.length,
+      count: emailsWithStatus.length,
     },
     {
       name: "Starred",
       slug: "starred",
       icon: Star,
-      count: emails.filter((email) => email.isStarred).length,
+      count: emailsWithStatus.filter((email) => email.isStarred).length,
     },
     {
       name: "Sent",
@@ -278,7 +309,7 @@ export default function InboxPage() {
       name: "Important",
       slug: "important",
       icon: Bookmark,
-      count: emails.filter((email) => email.isImportant).length || 0,
+      count: emailsWithStatus.filter((email) => email.isImportant).length || 0,
     },
     {
       name: "Bin",
@@ -288,7 +319,7 @@ export default function InboxPage() {
     },
   ];
 
-  const filteredEmails = emails.filter((email) => {
+  const filteredEmails = emailsWithStatus.filter((email) => {
     switch (activeFolder) {
       case "starred":
         return email.isStarred;
@@ -310,8 +341,6 @@ export default function InboxPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-slate-800">Inbox</h1>
-
       <div className="flex h-[75vh] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <EmailSidebar activeFolder={activeFolder} setActiveFolder={setActiveFolder} emailFolders={emailFolders} />
 
@@ -357,12 +386,17 @@ export default function InboxPage() {
           </div>
 
           {selectedEmail && (
-            <EmailDetails email={selectedEmail} onClose={handleCloseEmailDetails} handleAction={handleAction} />
+            <EmailDetails
+              email={selectedEmail}
+              onClose={handleCloseEmailDetails}
+              handleAction={handleAction}
+              refetchEmail={refetchEmail} // Pass the refetchEmail function
+            />
           )}
 
           <div className="flex-shrink-0 flex items-center justify-between p-3 border-t border-slate-200">
             <span className="text-sm text-slate-600">
-              Showing 1-{filteredEmails.length} of {emails.length.toLocaleString()}
+              Showing 1-{filteredEmails.length} of {emailsWithStatus.length.toLocaleString()}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -378,7 +412,7 @@ export default function InboxPage() {
           </div>
         </main>
       </div>
-      {/* <Toaster /> Add the Toaster component here */}
+      {/* <Toaster /> */}
     </div>
   );
 }

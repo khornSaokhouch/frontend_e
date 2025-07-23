@@ -11,7 +11,7 @@ import Navbar from '../../components/company/Navbar';
 import Sidebar from '../../components/company/Sidebar'; 
 
 // ✅ STEP 1: Import the new custom icons and the standard 'Home' icon.
-import { Home, AlertTriangle } from 'lucide-react';
+import { Home, AlertTriangle, ShoppingBag, Box, BoxesIcon } from 'lucide-react';
 import {
   OrderListsIcon,
   ProductIcon,
@@ -100,8 +100,10 @@ export default function AdminLayout({ children }) {
     { href: `/company/${id}/order-lists`, label: 'Order Lists', icon: OrderListsIcon },
     { href: `/company/${id}/product`, label: 'Product', icon: ProductIcon },
     { href: `/company/${id}/categories`, label: 'Categories', icon: CategoriesIcon },
-    { href: `/company/${id}/customers`, label: 'Customers', icon: CustomersIcon },
-    { href: `/company/${id}/draft`, label: 'Draft', icon: DraftIcon },
+    { href: `/company/${id}/promotionCategories`, label: 'PromotionCategories', icon: CustomersIcon },
+    { href: `/company/${id}/promotions`, label: 'Promotions', icon: DraftIcon },
+    { href: `/company/${id}/stores`, label: 'Stores', icon: ShoppingBag },
+    { href: `/company/${id}/stocks`, label: 'Stocks', icon: BoxesIcon },
     { href: `/company/${id}/accounts`, label: 'Accounts', icon: AccountsIcon },
     { href: `/company/${id}/setting`, label: 'Setting', icon: SettingIcon },
   ];

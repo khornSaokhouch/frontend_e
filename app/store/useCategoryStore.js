@@ -10,7 +10,7 @@ export const useCategoryStore = create((set, get) => ({
   fetchCategories: async () => {
     set({ loading: true, error: null });
     try {
-      const data = await request('/categories', 'GET');
+      const data = await request('/categories', 'GET', null, false); 
       set({ categories: data, loading: false });
     } catch (e) {
       set({ error: e.response?.data?.message || e.message || 'Failed to fetch categories', loading: false });

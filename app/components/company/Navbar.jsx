@@ -57,12 +57,13 @@ export default function Navbar({ user, loadingUser, onMenuButtonClick, onLogoutC
                 <div className="w-10 h-10 bg-gray-300 rounded-full animate-pulse" />
               ) : (
                 <Image
-                  src={getCleanImageUrl(user?.profile_image_url)}
-                  alt="Admin"
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover"
-                />
+                src={getCleanImageUrl(user?.profile_image_url)}
+                alt="Admin"
+                width={40}
+                height={40}
+                style={{ height: "auto" }}
+                className="rounded-full object-cover"
+              />              
               )}
             </button>
             <AnimatePresence>
