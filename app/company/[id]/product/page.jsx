@@ -15,12 +15,15 @@ const ProductForm = ({ product, onSave, onCancel }) => {
     category_id: product?.category_id || "",
     store_id: product?.store_id || "",
     product_image: null,
+    quantity_in_stock: product?.quantity_in_stock || 0,
   });
 
   const { categories, fetchCategories } = useCategoryStore();
   const { stores, fetchStores } = useStore();
 
-  const [imagePreview, setImagePreview] = useState(product?.product_image || null);
+  const [imagePreview, setImagePreview] = useState(
+    product?.product_image || null
+  );
 
   useEffect(() => {
     setFormData({
@@ -30,6 +33,7 @@ const ProductForm = ({ product, onSave, onCancel }) => {
       category_id: product?.category_id || "",
       store_id: product?.store_id || "",
       product_image: null,
+      quantity_in_stock: product?.quantity_in_stock || 0,
     });
 
     if (product?.product_image && typeof product.product_image === "string") {
@@ -65,7 +69,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border p-4 rounded max-w-md mx-auto space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="border p-4 rounded max-w-md mx-auto space-y-4"
+    >
       <div>
         <label className="block mb-1 font-medium">Name:</label>
         <input
@@ -137,6 +144,17 @@ const ProductForm = ({ product, onSave, onCancel }) => {
           className="w-full border p-2 rounded"
         />
       </div>
+      <div>
+        <label className="block mb-1 font-medium">Quantity in Stock:</label>
+        <input
+          type="number"
+          name="quantity_in_stock"
+          value={formData.quantity_in_stock}
+          onChange={handleChange}
+          required
+          className="w-full border p-2 rounded"
+        />
+      </div>
 
       <div>
         <label className="block mb-1 font-medium">Product Image:</label>
@@ -190,8 +208,12 @@ export default function ProductManagement() {
     fetchProducts();
   }, []);
 
+  console.log("Products:", products);
+  
   // Filter products by user id if you want user-specific products
   const userProducts = products.filter((p) => p.user_id === currentUserId);
+
+
 
   const handleEdit = (product) => {
     setEditingProduct(product);
@@ -217,6 +239,8 @@ export default function ProductManagement() {
         toast.success("Product updated successfully");
       } else {
         await createProduct(formData);
+        console.log("Product created:", formData);
+        
         toast.success("Product created successfully");
       }
       setEditingProduct(null);
@@ -255,8 +279,10 @@ export default function ProductManagement() {
                 <th className="border p-2">Price</th>
                 <th className="border p-2">Store</th>
                 <th className="border p-2">Category</th>
+                <th className="border p-2">QTY</th>
                 <th className="border p-2">Image</th>
                 <th className="border p-2">Actions</th>
+
               </tr>
             </thead>
             <tbody>
@@ -274,6 +300,7 @@ export default function ProductManagement() {
                     <td className="border p-2">${product.price}</td>
                     <td className="border p-2">{product.store_id}</td>
                     <td className="border p-2">{product.category_id}</td>
+                    <td className="border p-2">{product?.product_items[0]?.quantity_in_stock}</td>
                     <td className="border p-2">
                       {product.product_image_url ? (
                         <img
