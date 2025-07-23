@@ -172,7 +172,7 @@ export default function Navbar() {
                     <Heart className="h-5 w-5" />
                   </Link>
                   <Link
-                    href="/cart"
+                    href={`/user/${authUser?.id}/shopping-cart`}
                     title="Cart"
                     className="text-gray-600 hover:text-gray-800"
                   >
@@ -205,7 +205,7 @@ export default function Navbar() {
                     <Heart className="h-5 w-5 text-gray-600" />
                   </Link>
                   <Link
-                    href="/cart"
+                   href={`/user/${authUser?.id}/shopping-cart`}
                     title="Cart"
                     className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
                   >
