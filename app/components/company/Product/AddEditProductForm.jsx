@@ -18,7 +18,7 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
     price: product?.price || "",
     category_id: product?.category_id || "",
     store_id: product?.store_id || "",
-    product_image: null ,
+    product_image: null,
     quantity_in_stock: initialQuantity !== undefined ? Number(initialQuantity) : 0,
   });
 
@@ -33,10 +33,9 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
       price: product?.price || "",
       category_id: product?.category_id || "",
       store_id: product?.store_id || "",
-      product_image: null ,
+      product_image: null,
       quantity_in_stock: initialQuantity !== undefined ? Number(initialQuantity) : 0,
     });
-    // Set initial image preview if product has an image
     setImagePreview(product?.product_image_url || null);
   }, [product]);
 
@@ -65,7 +64,6 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
       setImagePreview(null);
     }
   };
-  
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -80,7 +78,8 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
 
   return (
     <motion.div
-      className="w-full max-w-sm mx-auto"
+      // MODIFIED: Increased width from max-w-sm to max-w-xl for two columns
+      className="w-full max-w-3xl mx-auto"
       variants={formVariants}
       initial="hidden"
       animate="visible"
@@ -99,7 +98,8 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-3 space-y-3">
+        {/* MODIFIED: Changed to a 2-column grid layout */}
+        <form onSubmit={handleSubmit} className="p-6 grid grid-cols-2 gap-x-5 gap-y-4">
           {/* Product Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -132,48 +132,47 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
                 onChange={handleChange}
                 required
                 placeholder="0.00"
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
 
-          {/* Store and Category */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Store *</label>
-              <select
-                value={formData.store_id}
-                onChange={(e) => handleSelectChange("store_id", e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select</option>
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-              <select
-                value={formData.category_id}
-                onChange={(e) => handleSelectChange("category_id", e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Store */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Store *</label>
+            <select
+              value={formData.store_id}
+              onChange={(e) => handleSelectChange("store_id", e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select</option>
+              {stores.map((store) => (
+                <option key={store.id} value={store.id}>
+                  {store.name}
+                </option>
+              ))}
+            </select>
           </div>
 
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+            <select
+              value={formData.category_id}
+              onChange={(e) => handleSelectChange("category_id", e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
           {/* Quantity */}
           <div>
             <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
@@ -191,8 +190,8 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
             />
           </div>
 
-          {/* Description */}
-          <div>
+          {/* Description - MODIFIED: Span 2 columns */}
+          <div className="col-span-2">
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
@@ -202,40 +201,40 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
               value={formData.description}
               onChange={handleChange}
               placeholder="Enter description"
-              rows={2}
+              rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
             />
           </div>
 
-          {/* Image Upload */}
-          <div>
+          {/* Image Upload - MODIFIED: Span 2 columns */}
+          <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
             <div className="space-y-2">
               <label
                 htmlFor="image-upload"
-                className="flex flex-col items-center justify-center w-full h-20 border-2 border-gray-300 border-dashed rounded-md cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-md cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex flex-col items-center justify-center">
-                  <Upload className="w-5 h-5 mb-1 text-gray-400" />
-                  <p className="text-xs text-gray-500">Click to upload</p>
+                  <Upload className="w-6 h-6 mb-1 text-gray-400" />
+                  <p className="text-sm text-gray-500">Click to upload image</p>
                 </div>
                 <input id="image-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               </label>
 
-              {/* Conditionally render image preview */}
               {imagePreview && (
-                <div className="relative">
+                <div className="relative w-full">
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-20 object-cover rounded-md border"
+                    className="w-full h-24 object-cover rounded-md border"
                   />
                   <button
                     type="button"
-                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full text-xs"
+                    className="absolute top-1.5 right-1.5 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full"
                     onClick={() => {
                       setImagePreview(null);
-                      setFormData((f) => ({ ...f, product_image_url: null }));
+                      setFormData((f) => ({ ...f, product_image: null }));
+                      document.getElementById('image-upload').value = ''; // Clear the file input
                     }}
                   >
                     <X className="h-3 w-3" />
@@ -245,21 +244,21 @@ const AddEditProductForm = ({ product, onSave, onCancel }) => {
             </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex space-x-2 pt-2">
+          {/* Buttons - MODIFIED: Span 2 columns */}
+          <div className="col-span-2 flex space-x-3 pt-2">
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-500 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-500 transition-colors font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors flex items-center justify-center"
+              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors flex items-center justify-center font-semibold"
             >
-              <CheckCircle className="w-4 h-4 mr-1" />
-              {product ? "Update" : "Save"}
+              <CheckCircle className="w-5 h-5 mr-2" />
+              {product ? "Update Product" : "Save Product"}
             </button>
           </div>
         </form>

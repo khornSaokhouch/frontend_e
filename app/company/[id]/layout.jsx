@@ -105,7 +105,7 @@ export default function AdminLayout({ children }) {
     { href: `/company/${id}/categories`, label: 'Categories', icon: Tags },
     { href: `/company/${id}/promotionCategories`, label: 'Promotion Categories', icon: TicketPercent },
     { href: `/company/${id}/promotions`, label: 'Promotions', icon: TicketPercent },
-    { href: `/company/${id}/stores`, label: 'Stores', icon: Warehouse },
+    { href: `/company/${id}/stores`, label: 'Add Stores', icon: Warehouse },
     { href: `/company/${id}/invoicemanager`, label: 'Invoice Manager', icon: Receipt },
     { href: `/company/${id}/stocks`, label: 'Stocks', icon: Building2 },
     { href: `/company/${id}/accounts`, label: 'Accounts', icon: Users },
