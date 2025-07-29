@@ -101,13 +101,19 @@ export const useProductStore = create((set) => ({
       const formData = new FormData();
       for (const key in data) {
         if (data[key] !== null && data[key] !== undefined) {
-          formData.append(key, data[key]);
+          if (key === "product_image") {
+            if (data[key] instanceof File) {
+              formData.append(key, data[key]);
+            }
+          } else {
+            formData.append(key, data[key]);
+          }
         }
       }
       formData.append('_method', 'PUT');
-
+  
       const res = await request(`/products/${id}`, 'POST', formData);
-
+  
       set((state) => ({
         products: state.products.map((p) => (p.id === id ? res.product : p)),
         loading: false,
@@ -116,6 +122,8 @@ export const useProductStore = create((set) => ({
       set({ error: err.message || 'Failed to update product', loading: false });
     }
   },
+  
+  
 
   deleteProduct: async (id) => {
     set({ loading: true, error: null });

@@ -44,7 +44,7 @@ export default function LoginPage() {
       } else if (user.role === 'company') {
         router.push(`/company/${user.id}/dashboard`);
       } else {
-        router.push(`/profile/${user.id}/myprofile`);
+        router.push(`/`);
       }
     } catch (err) {
       setLocalError(err.message || 'Login failed. Please check your credentials.');

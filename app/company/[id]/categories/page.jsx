@@ -1,7 +1,14 @@
+// /app/admin/[id]/categories/page.jsx (or wherever this page lives)
+
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useCategoryStore } from "../../../store/useCategoryStore"; // adjust the path as needed
+import { useCategoryStore } from "../../../store/useCategoryStore";
+import { Search } from "lucide-react";
+
+// Import the new components
+import CategoryCard from "../../../components/company/categories/CategoryCard";
+import CategoryCardSkeleton from "../../../components/company/categories/CategoryCardSkeleton";
 
 export default function CategoriesPage() {
   const { categories, loading, error, fetchCategories } = useCategoryStore();
@@ -9,49 +16,69 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
-  const filtered = categories.filter((cat) =>
+  const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">All Categories</h1>
+  const renderContent = () => {
+    if (loading) {
+      // Show a grid of skeletons while loading
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <CategoryCardSkeleton key={i} />
+          ))}
+        </div>
+      );
+    }
 
-      <input
-        type="text"
-        placeholder="Search categories..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full md:w-1/2 p-2 border border-gray-300 rounded mb-6"
-      />
+    if (error) {
+      return <p className="text-center text-red-500 py-10">Error: {error}</p>;
+    }
 
-      {loading && <p>Loading categories...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+    if (filteredCategories.length === 0) {
+      return (
+        <p className="text-center text-slate-500 py-10">
+          No categories found. Try adjusting your search.
+        </p>
+      );
+    }
 
-      {!loading && !filtered.length && (
-        <p className="text-gray-600">No categories found.</p>
-      )}
-
+    return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filtered.map((category) => (
-          <div
-            key={category.id}
-            className="p-4 border rounded shadow hover:shadow-md transition flex flex-col items-center text-center"
-          >
-            <img
-              src={category.image_url || "/placeholder.jpg"} // adjust field name if different
-              alt={category.name}
-              className="w-24 h-24 object-cover rounded-full mb-4"
-            />
-            <h2 className="text-xl font-semibold mb-2">{category.name}</h2>
-            {category.description && (
-              <p className="text-sm text-gray-600">{category.description}</p>
-            )}
-          </div>
+        {filteredCategories.map((category) => (
+          <CategoryCard key={category.id} category={category} />
         ))}
       </div>
+    );
+  };
+
+  return (
+    <div>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+        <div>
+          {/* Main title is now in the Navbar, so this is a subtitle */}
+          <p className="text-slate-500">
+            Manage and browse all product categories.
+          </p>
+        </div>
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search categories..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          />
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      {renderContent()}
     </div>
   );
 }

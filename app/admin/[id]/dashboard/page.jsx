@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import Image from "next/image";
-import { useUserStore } from "../../../store/userStore"; // <-- 1. IMPORT YOUR STORE
+import { useEffect, useMemo  } from "react";
+import { useUserStore } from "../../../store/userStore";
 import {
   Users,
   Package,
@@ -11,9 +10,12 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronDown,
-  Loader2, // <-- 2. IMPORT THE LOADER ICON
+  Loader2,
 } from "lucide-react";
-import { useProductStore } from "../../../store/useProductStore"; // <-- 1. IMPORT YOUR PRODUCT STORE
+import { useProductStore } from "../../../store/useProductStore";
+import { useCompanyStore } from "../../../store/useCompanyStore";
+import DealsDetails from "../../../components/admin/DealsDetails";
+import SalesDetails from "../../../components/admin/SalesDetails";
 
 const StatCard = ({
   title,
@@ -71,74 +73,78 @@ const StatusPill = ({ status }) => {
 };
 
 export default function AdminDashboard() {
-  // --- 3. FETCH REAL USER DATA ---
   const { users, loading: isLoadingUsers, fetchAllUsers } = useUserStore();
-  const { products, fetchProducts, loading, error } = useProductStore(); // Fetch products if needed, not used in this example
+  const { products, fetchProducts, loading: loadingProducts } = useProductStore();
+  const {
+    companies,
+    loading: loadingCompanies,
+    fetchCompanies,
+  } = useCompanyStore();
 
   useEffect(() => {
     fetchAllUsers();
     fetchProducts();
-  }, [fetchAllUsers, fetchProducts]);
+    fetchCompanies(); // fetch companies
+  }, [fetchAllUsers, fetchProducts, fetchCompanies]);
 
-  // Calculate total users from the store
-  const totalUsers = useMemo(() => {
-    if (!users) return 0;
-    // Exclude admins from the count, as in your original logic
-    return users.filter((u) => u.role !== "admin").length;
-  }, [users]);
+  const totalUsers = useMemo(
+    () => users?.filter((u) => u.role !== "admin").length || 0,
+    [users]
+  );
 
+  const totalProducts = useMemo(() => products?.length || 0, [products]);
+
+  const totalCompanies = useMemo(() => companies?.length || 0, [companies]);
   // --- 4. CREATE DYNAMIC STATS DATA ---
   // We use useMemo to prevent this array from being recreated on every render
   const statsData = useMemo(
     () => [
       {
-        title: "Total User",
-        // Show loader while fetching, then show the real number
+        title: "Total Users",
         value: isLoadingUsers ? (
           <Loader2 className="w-7 h-7 animate-spin text-slate-400" />
         ) : (
           totalUsers.toLocaleString()
         ),
         icon: Users,
-        trend: "8.5%", // This remains static for now, you can make it dynamic later
+        trend: "8.5%",
         period: "yesterday",
         iconBgColor: "bg-purple-400",
         trendColor: "green",
       },
-      // The rest of the stats are still using mock data for this example
       {
-        title: "Total Order",
-        value: "10,293",
+        title: "Total Products",
+        value: loadingProducts ? (
+          <Loader2 className="w-7 h-7 animate-spin text-slate-400" />
+        ) : (
+          totalProducts.toLocaleString()
+        ),
         icon: Package,
-        trend: "1.3%",
-        period: "past week",
-        iconBgColor: "bg-yellow-400",
+        trend: "2.1%",
+        period: "this week",
+        iconBgColor: "bg-blue-400",
         trendColor: "green",
       },
       {
-        title: "Total Sales",
-        value: "$89,000",
-        icon: LineChartIcon,
-        trend: "4.3%",
-        period: "yesterday",
-        iconBgColor: "bg-green-400",
-        trendColor: "red",
-      },
-      {
-        title: "Total Pending",
-        value: "2,040",
-        icon: Clock,
-        trend: "1.8%",
-        period: "yesterday",
-        iconBgColor: "bg-orange-400",
+        title: "Total Pendding Companies",
+        value: loadingCompanies ? (
+          <Loader2 className="w-7 h-7 animate-spin text-slate-400" />
+        ) : (
+          totalCompanies.toLocaleString()
+        ),
+        icon: Users, // or another icon that fits companies better
+        trend: "4.2%",
+        period: "last month",
+        iconBgColor: "bg-pink-400",
         trendColor: "green",
       },
+      // Add more stats here as needed, e.g. Total Pending or Total Orders
     ],
-    [isLoadingUsers, totalUsers]
-  ); // Dependencies array ensures this updates only when loading state or user count changes
+    [isLoadingUsers, totalUsers, loadingProducts, totalProducts, loadingCompanies, totalCompanies]
+  );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4">
       {/* Header */}
       <h1 className="text-4xl font-bold text-slate-800">Dashboard</h1>
 
@@ -158,109 +164,12 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Sales Details Section (No changes here) */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/80">
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200/80">
-          <h2 className="text-xl font-semibold text-slate-800">
-            Sales Details
-          </h2>
-          <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50">
-            October <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-4 sm:p-6 h-96">
-          <div className="h-full flex items-center justify-center bg-slate-50 rounded-lg">
-            <p className="text-slate-500">
-              Chart component would be rendered here.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Sales Details Section - Replaced with the SalesDetails Component */}
+      <SalesDetails users={users} products={products} companies={companies} />
 
-      {/* Deals Details Section (No changes here) */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/80">
-        {/* ... table code remains the same ... */}
-        <div className="flex justify-between items-center p-4 sm:p-6">
-          <h2 className="text-xl font-semibold text-slate-800">
-            Deals Details
-          </h2>
-          <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50">
-            October <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 font-semibold">
-              <tr>
-                <th scope="col" className="p-4">
-                  ID
-                </th>
-                <th scope="col" className="p-4">
-                  Product Name
-                </th>
-                <th scope="col" className="p-4">
-                  Descriptions
-                </th>
-                <th scope="col" className="p-4">
-                  Date - Time
-                </th>
 
-                <th scope="col" className="p-4">
-                  Amount
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product, index) => (
-                <tr
-                  key={product.id}
-                  className="border-t border-slate-200/80 hover:bg-slate-50/50"
-                >
-                  <td className="p-4 text-slate-600 font-medium">
-                    {index + 1}
-                  </td>
-                  <td className="p-4 font-medium text-slate-800">
-                    <div className="flex items-center gap-3">
-                      {product.product_image_url ? (
-                        <div className="relative w-9 h-9">
-                          <Image
-                            src={
-                              product.product_image_url || "/default_avatar.png"
-                            } // Fallback URL if product_image_url is not available
-                            alt={product.name}
-                            width={36}
-                            height={36}
-                            style={{ height: "auto", width: "auto" }}
-                            className="rounded-md object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-9 h-9 bg-slate-100 rounded-md flex items-center justify-center text-xs text-slate-400">
-                          No Image
-                        </div>
-                      )}
-                      {product.name}
-                    </div>
-                  </td>
-                  <td className="p-4 text-slate-600">
-                    {product.description?.length > 50
-                      ? product.description.slice(0, 50) + "..."
-                      : product.description || "No description"}
-                  </td>
-
-                  <td className="p-4 text-slate-600">
-                    {new Date(product.created_at).toLocaleString()}
-                  </td>
-
-                  <td className="p-4 text-slate-600 font-medium">
-                    ${product.price}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Deals Details Section - Using DealsTable Component */}
+      <DealsDetails products={products} />
     </div>
   );
 }

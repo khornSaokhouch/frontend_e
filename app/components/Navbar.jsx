@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   Menu,
   LogIn,
+  X,
 } from "lucide-react";
 
 // Reusable SVG icon for the logo
@@ -26,7 +27,6 @@ const TechLogoIcon = (props) => (
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
-    {/* ... SVG Path Definitions ... */}
     <defs>
       <linearGradient
         id="logoGradient"
@@ -92,7 +92,6 @@ export default function Navbar() {
 
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "Products", href: id ? `/user/${authUser?.id}/products` : "/products" },
     { label: "About Us", href: "/about" },
   ];
 
@@ -108,11 +107,15 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="sm:hidden text-gray-600 hover:text-gray-800 focus:outline-none mr-3"
             >
-              <Menu className="h-5 w-5" />
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" /> // Close icon when menu is open
+              ) : (
+                <Menu className="h-5 w-5" /> // Menu icon when menu is closed
+              )}
             </button>
 
             {/* Logo & Navigation Items */}
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-8 space-x-10">
               {/* Logo */}
               <Link href="/" className="flex items-center gap-1">
                 <TechLogoIcon className="h-6 w-6" />
@@ -127,7 +130,7 @@ export default function Navbar() {
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="hover:text-pink-600 transition-colors whitespace-nowrap"
+                    className="hover:text-pink-600 transition-colors  whitespace-nowrap"
                   >
                     {item.label}
                   </Link>
@@ -139,6 +142,9 @@ export default function Navbar() {
                   Become a seller
                 </Link>
               </div>
+            </div>
+
+            <div>
             </div>
           </div>
 
@@ -165,7 +171,7 @@ export default function Navbar() {
                 {/* Icons and Profile Image on Small Screens */}
                 <div className="sm:hidden flex items-center space-x-2">
                   <Link
-                    href={`/user/${authUser?.id}/favorites`}
+                    href={`/profile/${authUser?.id}/favorites`}
                     title="Favorites"
                     className="text-gray-600 hover:text-gray-800"
                   >
@@ -198,14 +204,14 @@ export default function Navbar() {
                 {/* Icons on Larger Screens */}
                 <div className="hidden sm:flex items-center gap-4">
                   <Link
-                    href={`/user/${authUser?.id}/favorites`}
+                    href={`/profile/${authUser?.id}/favorites`}
                     title="Favorites"
                     className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
                   >
                     <Heart className="h-5 w-5 text-gray-600" />
                   </Link>
                   <Link
-                   href={`/user/${authUser?.id}/shopping-cart`}
+                    href={`/user/${authUser?.id}/shopping-cart`}
                     title="Cart"
                     className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
                   >
@@ -284,8 +290,73 @@ export default function Navbar() {
                 Become a seller
               </Link>
             </nav>
+            <div className="flex flex-col items-start gap-4">
+              <Link
+                href="/products"
+                className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <ShoppingCart className="h-5 w-5 mr-1" />
+                Store
+              </Link>
+              <Link
+                href="/faq"
+                className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <Package className="h-5 w-5 mr-1" />
+                FAQ
+              </Link>
+              <Link
+                href="/orders"
+                className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <ShoppingCart className="h-5 w-5 mr-1" />
+                Orders
+              </Link>
+            </div>
           </div>
         )}
+
+        {/* Location and Cart Icons (Visible on larger screens) */}
+        <div className="hidden md:flex items-center space-x-10 text-sm">
+          <Link
+            href="/location"
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <MapPin className="h-5 w-5" />
+            <span className="ml-1">Location : Cambodia</span>
+          </Link>
+          <Link
+            href="/products"
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            <span className="ml-1">Store</span>
+          </Link>
+          <Link
+            href="/faq"
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <Package className="h-5 w-5" />
+            <span className="ml-1">FAQ</span>
+          </Link>
+          <Link
+            href="/products"
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            <span className="ml-1">Products</span>
+          </Link>
+          <Link
+            href="/orders"
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            <span className="ml-1">Orders</span>
+          </Link>
+
+
+         
+        </div>
 
         {/* Desktop Navigation (Hidden on Small Screens) */}
       </header>

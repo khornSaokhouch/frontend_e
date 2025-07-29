@@ -1,5 +1,7 @@
 import Footer from './components/Footer';
 import Navbar from './components/Navbar';
+import BrandCategorySection from './components/user/BrandCategorySection';
+import ProductCategory from './components/user/ProductCategory';
 
 export default function HomePage() {
     return (
@@ -7,8 +9,11 @@ export default function HomePage() {
          <div>
          <Navbar />
          </div>
-         <div className='text-center text-3xl font-bold mt-10 p-20'> 
-          Hello
+         <div> 
+          <ProductCategory />
+         </div>
+         <div className='p-6'>
+         <BrandCategorySection />
          </div>
          <div>
          <Footer />

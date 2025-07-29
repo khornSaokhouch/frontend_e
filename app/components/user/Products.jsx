@@ -1,93 +1,84 @@
-"use client";
-import React, { useEffect } from "react";
-import { useProductStore } from "../../store/useProductStore"; // Adjust path if needed
-import { useFavouritesStore } from "../../store/useFavouritesStore"; // Import favourites store
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { toast } from "react-hot-toast";
+"use client"
+import { useEffect } from "react"
+import { useParams } from "next/navigation"
+import { useProductStore } from "../../store/useProductStore"
+import { useFavouritesStore } from "../../store/useFavouritesStore"
+import ProductCard from "./ProductCard"
+import { Loader2, Package } from "lucide-react"
 
-export default function ProductsPage() {
-  const { id } = useParams();
-  const { products, loading, error, fetchAllProducts } = useProductStore();
-  const { addFavourite } = useFavouritesStore();
+export default function Products() {
+  const { id } = useParams()
+  const { products, loading, error, fetchAllProducts } = useProductStore()
+  const { favourites, addFavourite, fetchFavourites } = useFavouritesStore()
 
   useEffect(() => {
-    fetchAllProducts();
-  }, [fetchAllProducts]);
+    fetchAllProducts()
+    fetchFavourites(id)
+  }, [fetchAllProducts, fetchFavourites, id])
 
-  // Handler for add to favourite
-  const handleAddFavourite = async (productId) => {
-    if (!id) {
-      toast.error("User ID not found");
-      return;
-    }
-    try {
-      toast.loading("Adding to favourites...");
-      await addFavourite({ user_id: id, product_id: productId });
-      toast.dismiss(); // dismiss loading
-      toast.success("Added to favourites!");
-    } catch (err) {
-      toast.dismiss();
-      toast.error("Failed to add favourite: " + err.message);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-[400px] flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
+        <p className="text-slate-600 font-medium">Loading products...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-md mx-auto mt-8">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="w-6 h-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Products</h3>
+          <p className="text-red-700">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="max-w-md mx-auto mt-8">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="w-8 h-8 text-slate-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">No Products Found</h3>
+          <p className="text-slate-600">Check back later for new products.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-slate-800 mb-6">All Products</h1>
-
-      {loading && (
-        <div className="text-center text-indigo-600 py-10">Loading products...</div>
-      )}
-
-      {error && (
-        <div className="text-center text-red-600 bg-red-100 p-4 rounded-md">
-          Error: {error}
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">All Products</h1>
+          <p className="text-slate-600">Discover our latest collection</p>
         </div>
-      )}
+        <div className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+          {products.length} {products.length === 1 ? "product" : "products"}
+        </div>
+      </div>
 
-      {!loading && !error && products.length === 0 && (
-        <div className="text-center text-slate-500 py-10">No products found.</div>
-      )}
-
-      {!loading && !error && products.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {products.map((product) => {
+          const isFavourite = favourites?.some((fav) => fav?.product_id === product.id)
+          return (
+            <ProductCard
               key={product.id}
-              className="border border-slate-200 rounded-lg shadow-sm bg-white hover:shadow-md transition"
-            >
-              <img
-                src={product.product_image_url || product.product_image}
-                alt={product.name}
-                className="h-48 w-full object-cover rounded-t-lg"
-              />
-              <div className="p-4 space-y-2">
-                <h2 className="text-lg font-semibold text-slate-800 line-clamp-1">
-                  {product.name}
-                </h2>
-                <p className="text-sm text-slate-500 line-clamp-2">
-                  {product.description}
-                </p>
-                <p className="text-indigo-600 font-semibold text-sm">${product.price}</p>
-                <Link
-                  href={id ? `/user/${id}/details/${product.id}` : `/details/${product.id}`}
-                  className="block text-sm text-indigo-500 hover:underline"
-                >
-                  View Details
-                </Link>
-                {/* Add to favourite button */}
-                <button
-                  onClick={() => handleAddFavourite(product.id)}
-                  className="mt-2 w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition"
-                >
-                  Add to Favourite
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              product={product}
+              userId={id}
+              isFavourite={isFavourite}
+              onAddFavourite={(productId) => addFavourite({ user_id: id, product_id: productId })}
+            />
+          )
+        })}
+      </div>
     </div>
-  );
+  )
 }

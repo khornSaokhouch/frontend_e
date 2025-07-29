@@ -1,207 +1,169 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import { usePromotionsCategoryStore } from "../../store/usePromotionsCategoryStore";
 import { useCategoryStore } from "../../store/useCategoryStore";
 import { usePromotionsStore } from "../../store/usePromotionsStore";
+import { ChevronDown, ListPlus, Info } from "lucide-react";
+
+import CategoryCard, { CategoryCardSkeleton } from "./CategoryCard"; // Adjust path if needed
+
+const InitialStatePrompt = () => (
+  <div className="text-center py-16 px-6 bg-white rounded-lg border-2 border-dashed border-gray-300">
+    <ListPlus className="mx-auto w-12 h-12 text-gray-400" />
+    <h3 className="mt-4 text-xl font-semibold text-gray-800">Select a Promotion</h3>
+    <p className="mt-2 text-sm text-gray-500">
+      Choose a promotion from the dropdown above to manage its associated categories.
+    </p>
+  </div>
+);
 
 export default function PromotionCategories({ promotionId: initialPromotionId }) {
   const {
     fetchCategoriesByPromotion,
     attachCategoriesToPromotion,
     detachCategoryFromPromotion,
-    loading,
-    error,
+    loading: promoCatLoading,
     categoriesByPromotion,
   } = usePromotionsCategoryStore();
 
-  const { fetchCategories, categories } = useCategoryStore();
+  const { fetchCategories, categories: allCategories } = useCategoryStore();
   const { promotions, fetchPromotions } = usePromotionsStore();
 
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [promotionId, setPromotionId] = useState(initialPromotionId || "");
+  const [actionLoading, setActionLoading] = useState(null); // Tracks loading for a specific category action
 
   useEffect(() => {
     fetchPromotions();
     fetchCategories();
-  }, []);
+  }, [fetchPromotions, fetchCategories]);
 
   useEffect(() => {
     if (promotionId) {
       fetchCategoriesByPromotion(promotionId);
-      fetchCategories();
     }
-  }, [promotionId]);
+  }, [promotionId, fetchCategoriesByPromotion]);
 
-  const handleAttach = async () => {
-    if (!promotionId) {
-      toast.error("Please select a promotion first");
-      return;
-    }
-
-    if (selectedCategoryIds.length === 0) {
-      toast.error("Select at least one category");
-      return;
-    }
-
-    const attachedIds = new Set(categoriesByPromotion.map((cat) => cat.id));
-    const alreadyAttached = [];
-    const newToAttach = [];
-
-    selectedCategoryIds.forEach((id) => {
-      if (attachedIds.has(id)) {
-        const cat = categories.find((c) => c.id === id);
-        if (cat) alreadyAttached.push(cat.name);
-      } else {
-        newToAttach.push(id);
-      }
-    });
-
-    alreadyAttached.forEach((name) => {
-      toast(`Already attached ${name}`, { icon: "⚠️" });
-    });
-
-    if (newToAttach.length === 0) {
-      setSelectedCategoryIds([]);
-      return;
-    }
-
+  const handleAttach = async (categoryId) => {
+    setActionLoading(categoryId);
     try {
-      await attachCategoriesToPromotion(promotionId, newToAttach);
-      setSelectedCategoryIds([]);
-      await fetchCategoriesByPromotion(promotionId);
-      toast.success("Category(s) attached!");
+      await attachCategoriesToPromotion(promotionId, [categoryId]);
+      toast.success("Category attached!");
     } catch {
-      toast.error("Failed to attach category(s)");
+      toast.error("Failed to attach category");
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleDetach = async (categoryId) => {
-    const category = categoriesByPromotion.find((cat) => cat.id === categoryId);
+    setActionLoading(categoryId);
     try {
       await detachCategoryFromPromotion(promotionId, categoryId);
-      await fetchCategoriesByPromotion(promotionId);
-      toast.success(`Detached ${category?.name || "category"} successfully!`);
+      toast.success("Category detached!");
     } catch {
       toast.error("Failed to detach category");
+    } finally {
+      setActionLoading(null);
     }
   };
 
+  const availableCategories = useMemo(() => {
+    const attachedIds = new Set(categoriesByPromotion.map((cat) => cat.id));
+    return allCategories.filter((cat) => !attachedIds.has(cat.id));
+  }, [allCategories, categoriesByPromotion]);
+
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md font-sans">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen">
       <Toaster position="top-right" />
-      <h2 className="text-2xl font-semibold text-center mb-6 text-blue-600">
-        Manage Categories for Promotions
-      </h2>
 
-      {/* Select Promotion Dropdown */}
-      <div className="mb-6">
-        <label htmlFor="promotion" className="block text-gray-700 font-semibold mb-2">
-          Select Promotion:
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Link Categories to Promotions</h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Select a promotion, then add or remove categories to control where it applies.
+        </p>
+      </div>
+
+      {/* Promotion Selector */}
+      <div className="mb-8 max-w-md">
+        <label htmlFor="promotion" className="block text-sm font-medium text-gray-700 mb-1">
+          Select Promotion
         </label>
-
-        {promotions.length === 0 ? (
-          <p className="text-gray-500 italic">Loading promotions...</p>
-        ) : (
+        <div className="relative">
           <select
             id="promotion"
             value={promotionId}
-            onChange={(e) => {
-              const val = e.target.value;
-              setPromotionId(val === "" ? "" : Number(val));
-            }}
-            className="w-full border border-gray-300 rounded-md p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setPromotionId(e.target.value ? Number(e.target.value) : "")}
+            className="w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm appearance-none border"
           >
             <option value="">-- Select a Promotion --</option>
             {promotions.map((promo) => (
               <option key={promo.id} value={promo.id}>
-                {promo.title || `Promotion #${promo.id}`}
+                {promo.name}
               </option>
             ))}
           </select>
-        )}
+          <ChevronDown className="h-5 w-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" />
+        </div>
       </div>
-
-      {!promotionId && (
-        <p className="text-red-500 font-semibold text-center mb-6">
-          Please select a promotion to manage categories.
-        </p>
-      )}
-
-      {promotionId && (
-        <>
-          {loading && <p className="text-gray-600 italic mb-4">Loading...</p>}
-          {error && <p className="text-red-600 font-semibold mb-4">Error: {error}</p>}
-
-          <section className="mb-8">
-            <h3 className="text-xl font-semibold border-b-2 border-blue-500 pb-1 mb-4 text-blue-600">
-              Attached Categories
-            </h3>
-            {categoriesByPromotion.length === 0 ? (
-              <p className="text-gray-500">No categories attached yet.</p>
-            ) : (
-              <ul className="max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-gray-50">
-                {categoriesByPromotion.map((cat) => (
-                  <li
+      
+      {/* Main Content Area */}
+      {!promotionId ? (
+        <InitialStatePrompt />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Left Column: Available Categories */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Available Categories</h3>
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+              {promoCatLoading ? (
+                [...Array(5)].map((_, i) => <CategoryCardSkeleton key={i} />)
+              ) : availableCategories.length > 0 ? (
+                availableCategories.map((cat) => (
+                  <CategoryCard
                     key={cat.id}
-                    className="flex items-center px-4 py-2 border-b last:border-b-0"
-                  >
-                    <img
-                      src={cat.image_url}
-                      alt={cat.name}
-                      className="w-10 h-10 rounded-full object-cover mr-4 border border-gray-300"
-                    />
-                    <span className="flex-grow text-gray-800">{cat.name}</span>
-                    <button
-                      onClick={() => handleDetach(cat.id)}
-                      aria-label={`Detach ${cat.name}`}
-                      className="text-red-600 hover:text-red-800 transition-colors text-xl font-bold"
-                    >
-                      &times;
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                    category={cat}
+                    type="attach"
+                    onAction={handleAttach}
+                    loading={actionLoading === cat.id}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>All categories are attached.</p>
+                </div>
+              )}
+            </div>
+          </div>
 
-          <section>
-            <h3 className="text-xl font-semibold border-b-2 border-blue-500 pb-1 mb-4 text-blue-600">
-              Attach Categories
-            </h3>
-            <select
-              multiple
-              value={selectedCategoryIds}
-              onChange={(e) => {
-                const options = e.target.options;
-                const selected = [];
-                for (let i = 0; i < options.length; i++) {
-                  if (options[i].selected) selected.push(Number(options[i].value));
-                }
-                setSelectedCategoryIds(selected);
-              }}
-              className="w-full min-h-[6rem] border border-gray-300 rounded-md p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={handleAttach}
-              disabled={!promotionId || selectedCategoryIds.length === 0}
-              className={`px-4 py-2 rounded-md font-semibold transition-colors ${
-                !promotionId || selectedCategoryIds.length === 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              Attach Selected Categories
-            </button>
-          </section>
-        </>
+          {/* Right Column: Attached Categories */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Attached Categories</h3>
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+              {promoCatLoading ? (
+                [...Array(3)].map((_, i) => <CategoryCardSkeleton key={i} />)
+              ) : categoriesByPromotion.length > 0 ? (
+                categoriesByPromotion.map((cat) => (
+                  <CategoryCard
+                    key={cat.id}
+                    category={cat}
+                    type="detach"
+                    onAction={handleDetach}
+                    loading={actionLoading === cat.id}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500 flex flex-col items-center">
+                  <Info className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="font-medium">No categories attached.</p>
+                  <p className="text-sm">Click a category on the left to add it.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

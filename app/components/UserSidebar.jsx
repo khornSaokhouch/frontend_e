@@ -98,8 +98,8 @@ export default function UserSidebar() {
   const navLinks = [
     { name: "My Profile", href: `/profile/${id}/myprofile`, icon: User },
     { name: "Edit Profile", href: `/profile/${id}/edit`, icon: Edit },
-    { name: "My Orders", href: "/orders", icon: Package },
-    { name: "Favorites", href: "/favorites", icon: Heart },
+    { name: "My Orders", href: `/profile/${id}/orders`, icon: Package },
+    { name: "Favorites", href: `/profile/${id}/favorites`, icon: Heart },
     { name: "Shipping Addresses", href: "/addresses", icon: Home },
     { name: "Login & Security", href: "/security", icon: Shield },
   ];

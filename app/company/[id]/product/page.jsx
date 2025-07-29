@@ -1,191 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useProductStore } from "../../../store/useProductStore";
-import { useCategoryStore } from "../../../store/useCategoryStore";
-import { useStore } from "../../../store/useStore"; // added for stores
 import { useUserStore } from "../../../store/userStore";
+import { useCategoryStore } from "../../../store/useCategoryStore";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Package,
+  Store,
+  Tag,
+  Eye,
+  Search,
+} from "lucide-react";
 
-const ProductForm = ({ product, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: product?.name || "",
-    description: product?.description || "",
-    price: product?.price || "",
-    category_id: product?.category_id || "",
-    store_id: product?.store_id || "",
-    product_image: null,
-    quantity_in_stock: product?.quantity_in_stock || 0,
-  });
-
-  const { categories, fetchCategories } = useCategoryStore();
-  const { stores, fetchStores } = useStore();
-
-  const [imagePreview, setImagePreview] = useState(
-    product?.product_image || null
-  );
-
-  useEffect(() => {
-    setFormData({
-      name: product?.name || "",
-      description: product?.description || "",
-      price: product?.price || "",
-      category_id: product?.category_id || "",
-      store_id: product?.store_id || "",
-      product_image: null,
-      quantity_in_stock: product?.quantity_in_stock || 0,
-    });
-
-    if (product?.product_image && typeof product.product_image === "string") {
-      setImagePreview(product.product_image);
-    } else {
-      setImagePreview(null);
-    }
-  }, [product]);
-
-  useEffect(() => {
-    fetchCategories();
-    fetchStores();
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((f) => ({ ...f, [name]: value }));
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setFormData((f) => ({ ...f, product_image: file }));
-
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="border p-4 rounded max-w-md mx-auto space-y-4"
-    >
-      <div>
-        <label className="block mb-1 font-medium">Name:</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1 font-medium">Description:</label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          rows={3}
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1 font-medium">Store:</label>
-        <select
-          name="store_id"
-          value={formData.store_id}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        >
-          <option value="">Select Store</option>
-          {stores.map((store) => (
-            <option key={store.id} value={store.id}>
-              {store.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block mb-1 font-medium">Category:</label>
-        <select
-          name="category_id"
-          value={formData.category_id}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        >
-          <option value="">Select Category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block mb-1 font-medium">Price:</label>
-        <input
-          type="number"
-          step="0.01"
-          name="price"
-          value={formData.price}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-      </div>
-      <div>
-        <label className="block mb-1 font-medium">Quantity in Stock:</label>
-        <input
-          type="number"
-          name="quantity_in_stock"
-          value={formData.quantity_in_stock}
-          onChange={handleChange}
-          required
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1 font-medium">Product Image:</label>
-        <input type="file" accept="image/*" onChange={handleFileChange} />
-        {imagePreview && (
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="mt-2 max-h-40 object-contain border rounded"
-          />
-        )}
-      </div>
-
-      <div className="flex justify-between">
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="bg-gray-400 px-4 py-2 rounded hover:bg-gray-500"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-};
+import AddEditProductForm from "../../../components/company/Product/AddEditProductForm";
 
 export default function ProductManagement() {
   const {
@@ -198,22 +30,30 @@ export default function ProductManagement() {
     error,
   } = useProductStore();
 
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
-
+  const { categories, fetchCategories } = useCategoryStore();
   const { user } = useUserStore();
   const currentUserId = user?.id;
 
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories(); // ✅ correct
   }, []);
 
-  console.log("Products:", products);
-  
-  // Filter products by user id if you want user-specific products
   const userProducts = products.filter((p) => p.user_id === currentUserId);
 
-
+  const filteredProducts = userProducts.filter((product) => {
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || product.category_id === Number(filterCategory);
+    return matchesSearch && matchesCategory;
+  });
 
   const handleEdit = (product) => {
     setEditingProduct(product);
@@ -239,8 +79,6 @@ export default function ProductManagement() {
         toast.success("Product updated successfully");
       } else {
         await createProduct(formData);
-        console.log("Product created:", formData);
-        
         toast.success("Product created successfully");
       }
       setEditingProduct(null);
@@ -255,92 +93,218 @@ export default function ProductManagement() {
     setIsCreating(false);
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const getCategoryName = (id) =>
+    categories.find((c) => c.id === Number(id))?.name || "Unknown";
+
+  const ProductCard = ({ product }) => (
+    <motion.div variants={itemVariants}>
+      <motion.div
+        className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
+        whileHover={{ scale: 1.03 }}
+      >
+        <div className="relative">
+          {product.product_image_url ? (
+            <img
+              src={product.product_image_url}
+              alt={product.name}
+              className="w-full h-40 object-cover rounded-t-lg"
+            />
+          ) : (
+            <div className="w-full h-40 bg-gray-100 flex items-center justify-center rounded-t-lg">
+              <Package className="h-12 w-12 text-gray-400" />
+            </div>
+          )}
+          <div className="absolute top-2 right-2">
+            <motion.span
+              className="bg-white px-2 py-1 rounded text-sm font-medium text-gray-800 shadow-sm"
+              whileHover={{ scale: 1.1 }}
+            >
+              ${product.price}
+            </motion.span>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <h3 className="font-medium text-gray-900 mb-1 truncate">
+            {product.name}
+          </h3>
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
+            {product.description || "No description"}
+          </p>
+
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+            <div className="flex items-center">
+              <Store className="h-3 w-3 mr-1" />
+              <span>Store: {product.store_id}</span>
+            </div>
+            <div className="flex items-center">
+              <Tag className="h-3 w-3 mr-1" />
+              <span>Cat: {getCategoryName(product.category_id)}</span>
+            </div>
+          </div>
+
+          <motion.div className="flex items-center justify-between mb-3">
+            <motion.span
+              className={`text-xs px-2 py-1 rounded-full ${
+                product?.product_items?.[0]?.quantity_in_stock > 10
+                  ? "bg-green-100 text-green-700"
+                  : product?.product_items?.[0]?.quantity_in_stock > 0
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+              whileHover={{ scale: 1.1 }}
+            >
+              Stock: {product?.product_items?.[0]?.quantity_in_stock || 0}
+            </motion.span>
+          </motion.div>
+
+          <div className="flex space-x-2">
+            <motion.button
+              onClick={() => handleEdit(product)}
+              className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </motion.button>
+            <motion.button
+              onClick={() => handleDelete(product.id)}
+              className="flex-1 px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Delete
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Product Management</h1>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Product Management
+              </h1>
+              <p className="text-gray-600 text-sm">Manage your products</p>
+            </div>
+            <motion.button
+              onClick={() => {
+                setIsCreating(true);
+                setEditingProduct(null);
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors flex items-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Product
+            </motion.button>
+          </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+          {/* Search + Filter */}
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <motion.select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              whileHover={{ scale: 1.05 }}
+            >
+              <option value="all">All Categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </motion.select>
+          </div>
+        </div>
 
-      {!editingProduct && !isCreating && (
-        <>
-          <button
-            onClick={() => setIsCreating(true)}
-            className="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            + Add New Product
-          </button>
+        {/* Loading */}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <>
+            {/* Error */}
+            {error ? (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  No products found
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {searchTerm || filterCategory !== "all"
+                    ? "Try adjusting your search"
+                    : "Get started by adding your first product"}
+                </p>
+              </div>
+            ) : (
+              <motion.div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </motion.div>
+            )}
+          </>
+        )}
 
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr>
-                <th className="border p-2">ID</th>
-                <th className="border p-2">Name</th>
-                <th className="border p-2">Price</th>
-                <th className="border p-2">Store</th>
-                <th className="border p-2">Category</th>
-                <th className="border p-2">QTY</th>
-                <th className="border p-2">Image</th>
-                <th className="border p-2">Actions</th>
-
-              </tr>
-            </thead>
-            <tbody>
-              {userProducts.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center p-4">
-                    No products found.
-                  </td>
-                </tr>
-              ) : (
-                userProducts.map((product) => (
-                  <tr key={product.id}>
-                    <td className="border p-2">{product.id}</td>
-                    <td className="border p-2">{product.name}</td>
-                    <td className="border p-2">${product.price}</td>
-                    <td className="border p-2">{product.store_id}</td>
-                    <td className="border p-2">{product.category_id}</td>
-                    <td className="border p-2">{product?.product_items[0]?.quantity_in_stock}</td>
-                    <td className="border p-2">
-                      {product.product_image_url ? (
-                        <img
-                          src={product.product_image_url}
-                          alt={product.name}
-                          className="h-16 object-contain"
-                        />
-                      ) : (
-                        <span>No Image</span>
-                      )}
-                    </td>
-                    <td className="border p-2 space-x-2">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="bg-yellow-400 px-2 rounded hover:bg-yellow-500"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="bg-red-600 text-white px-2 rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </>
-      )}
-
-      {(editingProduct || isCreating) && (
-        <ProductForm
-          product={editingProduct}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
-      )}
+        {/* Modal Form */}
+        <AnimatePresence mode="wait">
+          {(editingProduct || isCreating) && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AddEditProductForm
+                product={editingProduct}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
-}
+}  

@@ -10,7 +10,6 @@ export const useFavouritesStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const res = await request(`/favourites/${id}`, 'GET');
-      console.log('Fetched favourites:', res); // <--- Add this line to inspect response
       set({ favourites: res || [], loading: false });
     } catch (err) {
       set({ error: err.message || 'Failed to fetch favourites', loading: false });

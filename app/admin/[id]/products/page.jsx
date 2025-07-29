@@ -3,10 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useProductStore } from '../../../store/useProductStore';
 import Image from 'next/image'; // Import Image component
+import { ChevronRight, Star, ChevronLeft } from 'lucide-react';
+
+const PAGE_SIZE = 12; // Number of products per page
 
 export default function ProductsPage() {
   const { products, loading, error, fetchAllProducts } = useProductStore();
   const [initLoading, setInitLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function loadProducts() {
@@ -15,6 +19,24 @@ export default function ProductsPage() {
     }
     loadProducts();
   }, [fetchAllProducts]);
+
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
+  const displayedProducts = products.slice(startIndex, endIndex);
+
+  const totalPages = Math.ceil(products.length / PAGE_SIZE);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   if (initLoading) {
     return (
@@ -35,10 +57,9 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-2">
       {/* Sale Banner Section */}
       <div className="bg-indigo-500 rounded-lg p-6 mb-8 text-white relative overflow-hidden">
-        {/* Wavy Background (You may need to find an appropriate SVG or use a background image) */}
         <div className="absolute inset-0 bg-indigo-600 opacity-20"></div>
 
         <div className="relative z-10 flex items-center justify-between">
@@ -59,7 +80,7 @@ export default function ProductsPage() {
 
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
+        {displayedProducts.map((product) => (
           <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             {/* Image Section */}
             <div className="relative h-64">
@@ -81,11 +102,11 @@ export default function ProductsPage() {
               {/* Star Ratings (Implement your star rating component here) */}
               <div className="flex items-center mt-2">
                 {/* Assuming you have a rating and review count */}
-                <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.176-6.545L.587 6.905l6.545-.952L10 0l2.868 5.953 6.545.952-4.709 4.64-5.878-3.09z"/></svg>
-                <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.176-6.545L.587 6.905l6.545-.952L10 0l2.868 5.953 6.545.952-4.709 4.64-5.878-3.09z"/></svg>
-                <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.176-6.545L.587 6.905l6.545-.952L10 0l2.868 5.953 6.545.952-4.709 4.64-5.878-3.09z"/></svg>
-                <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.176-6.545L.587 6.905l6.545-.952L10 0l2.868 5.953 6.545.952-4.709 4.64-5.878-3.09z"/></svg>
-                <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.176-6.545L.587 6.905l6.545-.952L10 0l2.868 5.953 6.545.952-4.709 4.64-5.878-3.09z"/></svg>
+                <Star className="w-4 h-4 text-yellow-500 fill-current"/>
+                <Star className="w-4 h-4 text-yellow-500 fill-current"/>
+                <Star className="w-4 h-4 text-yellow-500 fill-current"/>
+                <Star className="w-4 h-4 text-yellow-500 fill-current"/>
+                <Star className="w-4 h-4 text-yellow-500 fill-current"/>
                 <span className="text-gray-500 text-xs ml-1">(131)</span>
               </div>
 
@@ -97,6 +118,28 @@ export default function ProductsPage() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-end items-center mt-4 space-x-2">
+           <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+          >
+            <ChevronLeft className="h-5 w-5 mr-2" />
+            <span>Back</span>
+          </button>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+          >
+            <span>Next</span>
+            <ChevronRight className="h-5 w-5 ml-2" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

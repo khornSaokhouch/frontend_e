@@ -1,40 +1,40 @@
-'use client';
+// app/components/company/Sidebar.jsx
+"use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-// Custom logo component to replicate the design
-const Logo = () => (
-  <div className="mb-12 flex items-center gap-3 px-2">
-    {/* Recreating the icon with divs for a closer match */}
-    <div className="relative h-9 w-9">
-        <div className="absolute right-0 top-0 h-7 w-7 rounded-md bg-pink-300" />
-        <div className="absolute bottom-0 left-0 h-7 w-7 rounded-md border-[3px] border-blue-600 bg-[#F4F7FF]" />
-    </div>
-    <span className="text-2xl font-bold text-slate-800">SeleDash.</span>
-  </div>
-);
+const cn = (...classes) => classes.filter(Boolean).join(' ');
 
-export default function Sidebar({ links = [], pathname }) {
-   return (
-    <div className="flex h-full w-full flex-col bg-[#F4F7FF] p-6">
-      <Logo />
-      <nav className="flex flex-col gap-2">
+export default function Sidebar({ links }) {
+  const pathname = usePathname();
+
+  return (
+    <div className="flex h-full flex-col bg-white border-r border-slate-200">
+      <div className="h-16 flex items-center px-6 border-b border-slate-200">
+        <Link href="/" className="flex items-center gap-2">
+           <svg className="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg>
+          <h1 className="text-xl font-bold text-slate-800">Dashboard</h1>
+        </Link>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {links.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive = pathname.startsWith(link.href);
           return (
             <Link
               key={link.label}
               href={link.href}
-              className={`flex items-center gap-4 rounded-xl px-4 py-3 text-base transition-colors ${
+              className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-white font-bold text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:bg-blue-100/50 hover:text-slate-800'
-              }`}
+                  ? 'bg-indigo-50 text-indigo-600'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              )}
             >
-              <link.icon 
-                className={`h-6 w-6 transition-colors ${ isActive ? 'text-blue-600' : 'text-gray-400'}`} 
-                strokeWidth={isActive ? 2.5 : 2}
-              />
+              <link.icon className={cn('h-5 w-5', isActive ? 'text-indigo-500' : 'text-slate-500')} />
               <span>{link.label}</span>
             </Link>
           );

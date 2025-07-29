@@ -1,225 +1,176 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { usePromotionsStore } from '../../../store/usePromotionsStore';
-import { toast, Toaster } from 'react-hot-toast';
+
+import React, { useEffect, useState } from "react";
+import { usePromotionsStore } from "../../../store/usePromotionsStore";
+import { toast, Toaster } from "react-hot-toast";
+import { Plus, Tag, AlertCircle } from "lucide-react";
+
+import AddPromotionForm from "../../../components/company/AddPromotionForm";
+import EditPromotionModal from "../../../components/company/EditPromotionModal";
+import ConfirmDeleteModalPromotions from "../../../components/company/ConfirmDeleteModalPromotions";
+import PromotionCard from "../../../components/company/PromotionCard.jsx";
+
+// Skeleton component for loading state
+const PromotionCardSkeleton = () => (
+  <div className="bg-white border border-gray-200 rounded-lg shadow-sm animate-pulse">
+    <div className="p-4 border-b">
+      <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded w-full"></div>
+    </div>
+    <div className="p-4 space-y-3">
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+    </div>
+    <div className="p-4 bg-gray-50 border-t flex justify-end space-x-3">
+      <div className="h-8 bg-gray-200 rounded w-20"></div>
+      <div className="h-8 bg-gray-200 rounded w-20"></div>
+    </div>
+  </div>
+);
+
+// Component for empty state
+const EmptyState = ({ onAddClick }) => (
+  <div className="text-center py-16 px-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+    <div className="mx-auto w-16 h-16 flex items-center justify-center bg-gray-200 rounded-full">
+        <Tag className="w-8 h-8 text-gray-500" />
+    </div>
+    <h3 className="mt-4 text-xl font-semibold text-gray-800">No Promotions Yet</h3>
+    <p className="mt-2 text-sm text-gray-500">Get started by creating your first promotional offer.</p>
+    <div className="mt-6">
+      <button
+        onClick={onAddClick}
+        type="button"
+        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        <Plus className="-ml-1 mr-2 h-5 w-5" />
+        Create Promotion
+      </button>
+    </div>
+  </div>
+);
+
+// Component for error state
+const ErrorDisplay = ({ message }) => (
+    <div className="text-center py-16 px-6 bg-red-50 rounded-lg border border-red-200">
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+        <h3 className="mt-4 text-xl font-semibold text-red-800">Something Went Wrong</h3>
+        <p className="mt-2 text-sm text-red-600">{message || "We couldn't load your promotions. Please try again later."}</p>
+    </div>
+);
+
 
 export default function PromotionList() {
   const {
     promotions,
     fetchPromotions,
-    createPromotion,
-    updatePromotion,
     deletePromotion,
     loading,
     error,
   } = usePromotionsStore();
 
-  const [newPromotion, setNewPromotion] = useState({
-    name: '',
-    description: '',
-    discount_percentage: 0,
-    start_date: '',
-    end_date: '',
-  });
-
   const [editingPromotion, setEditingPromotion] = useState(null);
+  const [deletingPromotionId, setDeletingPromotionId] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPromotions();
-  }, []);
+  }, [fetchPromotions]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewPromotion((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreate = async () => {
+  const handleConfirmDelete = async () => {
+    if (!deletingPromotionId) return;
     try {
-      await createPromotion(newPromotion);
-      toast.success("Promotion created successfully");
-      setNewPromotion({
-        name: '',
-        description: '',
-        discount_percentage: 0,
-        start_date: '',
-        end_date: '',
-      });
+      await deletePromotion(deletingPromotionId);
+      toast.success("Promotion deleted successfully");
+      setDeletingPromotionId(null);
     } catch (err) {
-      toast.error(err.message || "Failed to create promotion");
+      toast.error(err.message || "Failed to delete promotion");
     }
   };
 
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditingPromotion((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const startEdit = (promotion) => {
-    setEditingPromotion(promotion);
-  };
-
-  const handleUpdate = async () => {
-    try {
-      await updatePromotion(editingPromotion.id, editingPromotion);
-      toast.success("Promotion updated successfully");
-      setEditingPromotion(null);
-    } catch (err) {
-      toast.error(err.message || "Failed to update promotion");
+  const renderContent = () => {
+    // Initial loading state (skeleton)
+    if (loading && promotions.length === 0) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => <PromotionCardSkeleton key={i} />)}
+        </div>
+      );
     }
-  };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this promotion?')) {
-      try {
-        await deletePromotion(id);
-        toast.success("Promotion deleted");
-      } catch (err) {
-        toast.error(err.message || "Failed to delete promotion");
-      }
+    // Error state
+    if (error) {
+      return <ErrorDisplay message={error} />;
     }
-  };
 
-  if (loading) return <p className="text-blue-600">Loading promotions...</p>;
-  if (error) return <p className="text-red-500">Error: {error}</p>;
+    // Empty state
+    if (!loading && promotions.length === 0) {
+      return <EmptyState onAddClick={() => setIsAddModalOpen(true)} />;
+    }
+    
+    // Content loaded state
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {promotions.map((promo) => (
+          <PromotionCard
+            key={promo.id}
+            promotion={promo}
+            onEdit={setEditingPromotion}
+            onDelete={setDeletingPromotionId}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-semibold mb-6">Promotions</h2>
-
-      {/* Create Promotion */}
-      <div className="bg-white shadow-md rounded p-6 mb-8">
-        <h3 className="text-lg font-bold mb-4">Create New Promotion</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <input
-            className="border p-2 rounded"
-            name="name"
-            value={newPromotion.name}
-            onChange={handleInputChange}
-            placeholder="Name"
-          />
-          <input
-            className="border p-2 rounded"
-            name="description"
-            value={newPromotion.description}
-            onChange={handleInputChange}
-            placeholder="Description"
-          />
-          <input
-            className="border p-2 rounded"
-            type="number"
-            name="discount_percentage"
-            value={newPromotion.discount_percentage}
-            onChange={handleInputChange}
-            placeholder="Discount %"
-          />
-          <input
-            className="border p-2 rounded"
-            type="date"
-            name="start_date"
-            value={newPromotion.start_date}
-            onChange={handleInputChange}
-          />
-          <input
-            className="border p-2 rounded"
-            type="date"
-            name="end_date"
-            value={newPromotion.end_date}
-            onChange={handleInputChange}
-          />
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen">
+      <Toaster position="top-right" />
+      
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Promotions</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Manage your company's promotional offers and discount codes.
+          </p>
         </div>
         <button
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          onClick={() => setIsAddModalOpen(true)}
+          className="mt-4 sm:mt-0 flex-shrink-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          Create
+          <Plus className="-ml-1 mr-2 h-5 w-5" />
+          Add Promotion
         </button>
       </div>
 
-      {/* Edit Promotion */}
-      {editingPromotion && (
-        <div className="bg-yellow-100 border border-yellow-400 p-6 rounded mb-8">
-          <h3 className="text-lg font-bold mb-4">Edit Promotion</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <input
-              className="border p-2 rounded"
-              name="name"
-              value={editingPromotion.name}
-              onChange={handleEditChange}
-              placeholder="Name"
-            />
-            <input
-              className="border p-2 rounded"
-              name="description"
-              value={editingPromotion.description}
-              onChange={handleEditChange}
-              placeholder="Description"
-            />
-            <input
-              className="border p-2 rounded"
-              type="number"
-              name="discount_percentage"
-              value={editingPromotion.discount_percentage}
-              onChange={handleEditChange}
-              placeholder="Discount %"
-            />
-            <input
-              className="border p-2 rounded"
-              type="date"
-              name="start_date"
-              value={editingPromotion.start_date}
-              onChange={handleEditChange}
-            />
-            <input
-              className="border p-2 rounded"
-              type="date"
-              name="end_date"
-              value={editingPromotion.end_date}
-              onChange={handleEditChange}
-            />
-          </div>
-          <div className="space-x-2">
-            <button
-              onClick={handleUpdate}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-            >
-              Update
-            </button>
-            <button
-              onClick={() => setEditingPromotion(null)}
-              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+      {/* Main Content Area */}
+      <main>
+        {renderContent()}
+      </main>
+
+      {/* Modals */}
+      {isAddModalOpen && (
+        <AddPromotionForm
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+        />
       )}
 
-      {/* List Promotions */}
-      <div className="space-y-4">
-        {promotions.map((promo) => (
-          <div key={promo.id} className="bg-white shadow p-4 rounded">
-            <h4 className="text-lg font-semibold">{promo.name}</h4>
-            <p className="text-sm text-gray-700">{promo.description}</p>
-            <p className="text-sm text-gray-500">
-              {promo.discount_percentage}% off | {promo.start_date} → {promo.end_date}
-            </p>
-            <div className="mt-2 space-x-2">
-              <button
-                onClick={() => startEdit(promo)}
-                className="text-blue-600 hover:underline"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(promo.id)}
-                className="text-red-600 hover:underline"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {editingPromotion && (
+        <EditPromotionModal
+          isOpen={!!editingPromotion}
+          onClose={() => setEditingPromotion(null)}
+          promotion={editingPromotion}
+        />
+      )}
+
+      <ConfirmDeleteModalPromotions
+        isOpen={!!deletingPromotionId}
+        onClose={() => setDeletingPromotionId(null)}
+        onConfirm={handleConfirmDelete}
+        loading={loading} // You might want a specific 'deleting' state for the button
+      />
     </div>
   );
 }
