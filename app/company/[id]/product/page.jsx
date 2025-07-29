@@ -11,13 +11,65 @@ import {
   Edit,
   Trash2,
   Package,
-  Store,
-  Tag,
-  Eye,
   Search,
+  AlertTriangle,
 } from "lucide-react";
 
 import AddEditProductForm from "../../../components/company/Product/AddEditProductForm";
+
+// --- NEW STYLED CONFIRMATION MODAL COMPONENT ---
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="bg-white rounded-lg shadow-xl w-full max-w-md"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        <div className="p-8 text-center">
+          {/* Icon */}
+          <div className="flex items-center justify-center mx-auto h-20 w-20 rounded-full border-4 border-yellow-400">
+            <AlertTriangle className="h-10 w-10 text-yellow-400" />
+          </div>
+
+          {/* Title */}
+          <h3 className="mt-5 text-2xl font-bold text-gray-800">{title}</h3>
+
+          {/* Subtitle/Description */}
+          <p className="mt-2 text-md text-gray-600">{children}</p>
+        </div>
+
+        {/* Buttons */}
+        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-lg">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-2 text-sm font-semibold text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="px-6 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+          >
+            OK
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 
 export default function ProductManagement() {
   const {
@@ -39,9 +91,13 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+
+
   useEffect(() => {
     fetchProducts();
-    fetchCategories(); // ✅ correct
+    fetchCategories();
   }, []);
 
   const userProducts = products.filter((p) => p.user_id === currentUserId);
@@ -57,18 +113,25 @@ export default function ProductManagement() {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
-    toast.success("Editing product: " + product.name);
     setIsCreating(false);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        await deleteProduct(id);
-        toast.success("Product deleted successfully");
-      } catch {
-        toast.error("Failed to delete product");
-      }
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+  
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await deleteProduct(productToDelete.id);
+      toast.success("Product deleted successfully");
+    } catch {
+      toast.error("Failed to delete product");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -106,104 +169,83 @@ export default function ProductManagement() {
     visible: { opacity: 1, y: 0 },
   };
 
-  const getCategoryName = (id) =>
-    categories.find((c) => c.id === Number(id))?.name || "Unknown";
-
   const ProductCard = ({ product }) => (
     <motion.div variants={itemVariants}>
-      <motion.div
-        className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
-        whileHover={{ scale: 1.03 }}
-      >
-        <div className="relative">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden flex flex-col h-full">
+        <div className="bg-gray-100 p-4">
           {product.product_image_url ? (
-            <img
+            <motion.img
               src={product.product_image_url}
               alt={product.name}
-              className="w-full h-40 object-cover rounded-t-lg"
+              className="w-full h-48 object-contain"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
             />
           ) : (
-            <div className="w-full h-40 bg-gray-100 flex items-center justify-center rounded-t-lg">
+            <div className="w-full h-48 flex items-center justify-center">
               <Package className="h-12 w-12 text-gray-400" />
             </div>
           )}
-          <div className="absolute top-2 right-2">
-            <motion.span
-              className="bg-white px-2 py-1 rounded text-sm font-medium text-gray-800 shadow-sm"
-              whileHover={{ scale: 1.1 }}
-            >
+        </div>
+        <div className="p-4 flex flex-col flex-grow space-y-1">
+          <div className="flex justify-between items-start">
+            <h3 className="font-bold text-lg text-gray-800 leading-tight">
+              {product.name}
+            </h3>
+            <p className="text-lg font-bold text-gray-900 ml-2">
               ${product.price}
-            </motion.span>
+            </p>
           </div>
-        </div>
-
-        <div className="p-4">
-          <h3 className="font-medium text-gray-900 mb-1 truncate">
-            {product.name}
-          </h3>
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
-            {product.description || "No description"}
+          <p className="text-sm text-gray-500">
+            {product.description || "No description available."}
           </p>
-
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-            <div className="flex items-center">
-              <Store className="h-3 w-3 mr-1" />
-              <span>Store: {product.store_id}</span>
+          <div className="flex-grow" />
+          <div>
+            <div className="mb-3">
+              <span
+                className={`inline-block text-sm font-medium rounded-full ${
+                  product?.product_items?.[0]?.quantity_in_stock > 10
+                    ? "bg-green-100 text-green-700"
+                    : product?.product_items?.[0]?.quantity_in_stock > 0
+                    ? " text-yellow-700"
+                    : " text-red-700"
+                }`}
+              >
+                Stock: {product?.product_items?.[0]?.quantity_in_stock || 0}
+              </span>
             </div>
-            <div className="flex items-center">
-              <Tag className="h-3 w-3 mr-1" />
-              <span>Cat: {getCategoryName(product.category_id)}</span>
+            <div className="flex gap-2">
+              <motion.button
+                onClick={() => handleEdit(product)}
+                className="flex-1 px-1 py-1 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <Edit className="h-4 w-4 mr-1.5" />
+                Edit
+              </motion.button>
+              <motion.button
+                onClick={() => handleDeleteClick(product)}
+                className="flex-1 px-1 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all flex items-center justify-center"
+                whileHover={{ scale: 1.05 }}
+              >
+                <Trash2 className="h-4 w-4 mr-1.5" />
+                Delete
+              </motion.button>
             </div>
-          </div>
-
-          <motion.div className="flex items-center justify-between mb-3">
-            <motion.span
-              className={`text-xs px-2 py-1 rounded-full ${
-                product?.product_items?.[0]?.quantity_in_stock > 10
-                  ? "bg-green-100 text-green-700"
-                  : product?.product_items?.[0]?.quantity_in_stock > 0
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-              whileHover={{ scale: 1.1 }}
-            >
-              Stock: {product?.product_items?.[0]?.quantity_in_stock || 0}
-            </motion.span>
-          </motion.div>
-
-          <div className="flex space-x-2">
-            <motion.button
-              onClick={() => handleEdit(product)}
-              className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Edit className="h-3 w-3 mr-1" />
-              Edit
-            </motion.button>
-            <motion.button
-              onClick={() => handleDelete(product.id)}
-              className="flex-1 px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors flex items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Delete
-            </motion.button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
+        {/* Header and Filters... (code is unchanged) */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Product Management
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
               <p className="text-gray-600 text-sm">Manage your products</p>
             </div>
             <motion.button
@@ -219,7 +261,6 @@ export default function ProductManagement() {
             </motion.button>
           </div>
 
-          {/* Search + Filter */}
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -247,14 +288,13 @@ export default function ProductManagement() {
           </div>
         </div>
 
-        {/* Loading */}
+        {/* Product Grid */}
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : (
           <>
-            {/* Error */}
             {error ? (
               <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
                 <p className="text-red-600 text-sm">{error}</p>
@@ -262,9 +302,7 @@ export default function ProductManagement() {
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  No products found
-                </h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">No products found</h3>
                 <p className="text-gray-600 mb-4">
                   {searchTerm || filterCategory !== "all"
                     ? "Try adjusting your search"
@@ -273,7 +311,7 @@ export default function ProductManagement() {
               </div>
             ) : (
               <motion.div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -286,11 +324,11 @@ export default function ProductManagement() {
           </>
         )}
 
-        {/* Modal Form */}
+        {/* Modals Container */}
         <AnimatePresence mode="wait">
           {(editingProduct || isCreating) && (
             <motion.div
-              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6"
+              className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -303,8 +341,18 @@ export default function ProductManagement() {
               />
             </motion.div>
           )}
+
+          <ConfirmationModal
+           key="confirm-modal" 
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            onConfirm={handleConfirmDelete}
+            title="Are you sure?"
+          >
+            This will permanently delete the product "{productToDelete?.name}".
+          </ConfirmationModal>
         </AnimatePresence>
       </div>
     </div>
   );
-}  
+}
