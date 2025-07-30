@@ -17,12 +17,12 @@ export default function ProductsByCategoryPage({ categoryId }) {
     fetchProductsByCategory,
     fetchCategoryById,
   } = useProductStore();
+
   const [isLoading, setIsLoading] = useState(false);
+  const [categoryName, setCategoryName] = useState('');
 
   const { favourites } = useFavouritesStore(); // <-- Get favourites list
   const { addFavourite } = useFavouritesStore();
-
-  const [categoryName, setCategoryName] = useState('');
 
   useEffect(() => {
     if (categoryId) {
@@ -38,12 +38,12 @@ export default function ProductsByCategoryPage({ categoryId }) {
       toast.error("You need to be logged in to add favourites.");
       return;
     }
-  
+
     try {
       const loadingToastId = toast.loading("Adding to favourites...");
-  
+
       await addFavourite({ user_id: userId, product_id: productId });
-  
+
       toast.success("Added to favourites!", { id: loadingToastId });
     } catch (err) {
       toast.error(`Failed to add favourite: ${err.message}`, { id: loadingToastId });
@@ -85,14 +85,14 @@ export default function ProductsByCategoryPage({ categoryId }) {
       {!loading && !error && products.length > 0 && (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((product) => {
-            // Check if product is favourited
-            const isFavourite = favourites.some(fav => fav.product_id === product.id);
+            // ✅ Safely check if product is favourited
+            const isFavourite = favourites?.some(fav => fav?.product_id === product.id);
 
             return (
               <ProductCard
                 key={product.id}
                 product={product}
-                isFavourite={isFavourite}              // Pass favourite status
+                isFavourite={isFavourite}
                 onAddFavourite={() => handleAddFavourite(product.id)}
                 disabled={isLoading}
                 className="hover:shadow-lg transition-shadow duration-300"

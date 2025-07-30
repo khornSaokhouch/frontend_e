@@ -58,6 +58,7 @@ export const useProductStore = create((set) => ({
       });
     }
   },
+  
 
 
   fetchProduct: async (id) => {

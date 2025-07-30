@@ -1,242 +1,130 @@
+// File: pages/user/[id]/orders.js (or your path)
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useShopOrderStore } from "../../../store/useShopOrder";
-import { useOrderStatusStore } from "../../../store/useOrderStatus";
 import toast from "react-hot-toast";
+import { ClipboardList, PackageX, AlertTriangle } from "lucide-react";
+
+// Import your new, simplified OrderCard component
+import OrderCard from "../../../components/user/orders/OrderCard";
 
 const UserOrdersPage = () => {
+  // --- SIMPLIFIED STATE AND LOGIC ---
   const { id: userId } = useParams();
-
-  const {
-    orders,
-    fetchOrdersByUser,  // Make sure your store exports this
-    loading,
-    error,
-    deleteOrder,
+  const { 
+    orders, 
+    fetchOrdersByUser, 
+    loading, 
+    error, 
+    deleteOrder 
   } = useShopOrderStore();
 
-  const {
-    orderStatuses,
-    fetchOrderStatuses,
-    updateOrderStatus,
-    loading: statusesLoading,
-    error: statusesError,
-  } = useOrderStatusStore();
-
-  const [editId, setEditId] = useState(null);
-  const [editOrder, setEditOrder] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [actionError, setActionError] = useState(null);
+  // We only need one loading state for the delete action
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (userId) {
       fetchOrdersByUser(userId);
-      fetchOrderStatuses();
     }
-  }, [userId, fetchOrdersByUser, fetchOrderStatuses]);
+  }, [userId, fetchOrdersByUser]);
 
-  const handleEditClick = (order) => {
-    setEditId(order.id);
-    setEditOrder({ ...order });
-    setActionError(null);
-  };
 
-  const handleStatusChange = (e) => {
-    const statusId = Number(e.target.value);
-    setEditOrder((prev) => ({
-      ...prev,
-      order_status_id: statusId,
-    }));
-  };
-
-  const handleSaveClick = async () => {
-    if (!editOrder?.order_status_id) {
-      setActionError("Please select a valid status.");
-      return;
-    }
-
-    setActionLoading(true);
-    setActionError(null);
-
+  // Simplified delete handler
+  const handleDelete = async (id) => {
+    setIsDeleting(true);
     try {
-      await updateOrderStatus(editId, editOrder.order_status_id);
-      await fetchOrdersByUser(userId);
-      setEditId(null);
-      setEditOrder(null);
-      toast.success("Order status updated!");
-    } catch (error) {
-      setActionError("Failed to update order status.");
-      toast.error("Failed to update order status.");
+        await deleteOrder(id);
+        toast.success("Order deleted successfully!");
+        // Refetch the orders list to update the UI
+        await fetchOrdersByUser(userId); 
+    } catch (err) {
+        toast.error("Failed to delete order.");
     } finally {
-      setActionLoading(false);
+        setIsDeleting(false);
     }
   };
-
+  
+  // Confirmation toast, now calling the simplified handler
   const confirmDelete = (id) => {
     toast((t) => (
-      <div className="p-4">
-        <p>Are you sure you want to delete this order?</p>
-        <div className="mt-2 flex justify-end gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(t.id);
-              setActionLoading(true);
-              setActionError(null);
-
-              const success = await deleteOrder(id);
-
-              if (!success) {
-                setActionError("Failed to delete order.");
-                toast.error("Failed to delete order.");
-              } else {
-                if (editId === id) {
-                  setEditId(null);
-                  setEditOrder(null);
-                }
-                toast.success("Order deleted successfully!");
-                await fetchOrdersByUser(userId);
-              }
-
-              setActionLoading(false);
-            }}
-            className="bg-red-600 text-white px-3 py-1 rounded"
+      <div className="flex flex-col gap-3">
+        <p className="font-semibold">Are you sure you want to delete this order?</p>
+        <div className="flex justify-end gap-3">
+          <button 
+            onClick={() => { toast.dismiss(t.id); handleDelete(id); }} 
+            className="px-4 py-1 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700"
           >
-            Yes
+            Delete
           </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-300 px-3 py-1 rounded"
+          <button 
+            onClick={() => toast.dismiss(t.id)} 
+            className="px-4 py-1 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
           >
-            No
+            Cancel
           </button>
         </div>
       </div>
-    ), {
-      duration: Infinity,
-      style: { minWidth: "250px" },
-    });
+    ));
   };
+  // --- END OF LOGIC SECTION ---
 
-  if (loading || statusesLoading)
-    return (
-      <p className="text-center mt-10 text-lg font-medium">
-        Loading orders...
-      </p>
-    );
 
-  if (error || statusesError)
+  // --- DESIGNED LOADING, ERROR, AND EMPTY STATES ---
+  if (loading) {
     return (
-      <p className="text-center mt-10 text-red-600">{error || statusesError}</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-200 border-t-orange-500 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-600 font-medium">Loading Orders...</p>
+        </div>
+      </div>
     );
+  }
 
-  if (!orders || orders.length === 0)
+  if (error) {
     return (
-      <p className="text-center mt-10 text-gray-500">
-        No orders found for this user.
-      </p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center p-8 bg-white shadow-lg rounded-xl">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-red-800">An Error Occurred</h3>
+          <p className="text-gray-600 mt-2">{error}</p>
+        </div>
+      </div>
     );
+  }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 mt-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        Orders for User {userId}
-      </h1>
+    <main className="bg-gray-50 min-h-screen">
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <header className="text-center mb-10">
+          <ClipboardList className="w-12 h-12 mx-auto text-orange-500 mb-2" />
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Order History</h1>
+          <p className="mt-2 text-lg text-gray-600">
+            A total of <span className="font-bold text-gray-800">{orders.length}</span> orders found for user {userId}.
+          </p>
+        </header>
 
-      {actionError && (
-        <p className="text-red-600 text-center mb-4">{actionError}</p>
-      )}
-
-      <ul className="space-y-6">
-        {orders.map((order) => (
-          <li key={order.id} className="bg-white shadow rounded-lg p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p><strong>Order ID:</strong> {order.id}</p>
-                <p>
-                  <strong>Order Date:</strong>{" "}
-                  {order.order_date ? new Date(order.order_date).toLocaleDateString() : "N/A"}
-                </p>
-                <p><strong>Total:</strong> ${order.order_total ?? "N/A"}</p>
-                <p>
-                  <strong>Shipping:</strong>{" "}
-                  {order.shipping_method?.name
-                    ? `${order.shipping_method.name} ($${order.shipping_method.price})`
-                    : "N/A"}
-                </p>
-              </div>
-
-              <div>
-                <p><strong>Address:</strong> {order.shipping_address || "N/A"}</p>
-                <p><strong>Payment:</strong> {order.payment_method?.provider || "N/A"}</p>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {editId === order.id ? (
-                    <select
-                      value={editOrder?.order_status_id ?? order.order_status_id}
-                      onChange={handleStatusChange}
-                      className="mt-1 border rounded px-2 py-1"
-                      disabled={actionLoading}
-                    >
-                      {orderStatuses.map((status) => (
-                        <option key={status.id} value={status.id}>
-                          {status.status}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="ml-1 font-medium text-blue-600">
-                      {order.order_status?.status || "N/A"}
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex gap-4">
-              {editId === order.id ? (
-                <>
-                  <button
-                    onClick={handleSaveClick}
-                    disabled={actionLoading}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditId(null);
-                      setEditOrder(null);
-                      setActionError(null);
-                    }}
-                    className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-                    disabled={actionLoading}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleEditClick(order)}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => confirmDelete(order.id)}
-                    disabled={actionLoading}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+        {orders.length > 0 ? (
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                isDeleting={isDeleting}
+                onDelete={() => confirmDelete(order.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 border-2 border-dashed border-gray-300 rounded-xl">
+            <PackageX className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-3">No Orders Found</h2>
+            <p className="text-gray-600">This user has not placed any orders yet.</p>
+          </div>
+        )}
+      </div>
     </main>
   );
 };

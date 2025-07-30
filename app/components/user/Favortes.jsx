@@ -1,34 +1,30 @@
+// File: app/profile/[id]/favorites/page.js
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useFavouritesStore } from "../../store/useFavouritesStore";
 import { toast } from "react-hot-toast";
-import { Trash2, ShoppingCart } from "lucide-react";
+import { Heart, PackageX } from "lucide-react";
 import { motion } from "framer-motion";
+
+// Import your new components
+import FavouriteItemRow from "../../components/user/Favourite/FavouriteItemRow"; 
+import Pagination from "../../components/ui/Pagination";
 import ConfirmDeletionFavorites from "../../components/user/ConfirmDeletionFavorites";
 
-export default function Favourites() {
-  const { id } = useParams();
-  const {
-    favourites = [],
-    loading,
-    error,
-    fetchFavourites,
-    removeFavourite,
-  } = useFavouritesStore();
-
+export default function FavouritesPage() {
+  // All your state and logic for deletion remains exactly the same
+  const { id: userId } = useParams();
+  const { favourites = [], loading, error, fetchFavourites, removeFavourite } = useFavouritesStore();
+  const [currentPage, setCurrentPage] = useState(1);
   const [showConfirmDeletion, setShowConfirmDeletion] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-
-  const itemsPerPage = 6;
-  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // A list view looks better with slightly fewer items per page
 
   useEffect(() => {
-    if (id) {
-      fetchFavourites(id);
-    }
-  }, [id, fetchFavourites]);
+    if (userId) fetchFavourites(userId);
+  }, [userId, fetchFavourites]);
 
   const handleDeleteConfirmation = (favId) => {
     setItemToDelete(favId);
@@ -38,96 +34,94 @@ export default function Favourites() {
   const handleDelete = async () => {
     if (!itemToDelete) return;
     try {
-      toast.loading("Removing...");
-      await removeFavourite(itemToDelete);
-      await fetchFavourites(id);
-      toast.dismiss();
-      toast.success("Favourite removed!");
-    } catch (err) {
-      toast.dismiss();
-      toast.error("Failed to remove favourite.");
+      await toast.promise(
+        removeFavourite(itemToDelete).then(() => fetchFavourites(userId)),
+        {
+          loading: 'Removing from favourites...',
+          success: 'Removed from favourites!',
+          error: 'Failed to remove favourite.',
+        }
+      );
     } finally {
       setShowConfirmDeletion(false);
       setItemToDelete(null);
     }
   };
-
+  
   const handleCancelDelete = () => {
     setShowConfirmDeletion(false);
     setItemToDelete(null);
   };
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const displayedFavourites = Array.isArray(favourites)
-    ? favourites.slice(startIndex, startIndex + itemsPerPage)
-    : [];
-
+  // Pagination logic...
   const totalPages = Math.ceil(favourites.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const displayedFavourites = Array.isArray(favourites) ? favourites.slice(startIndex, startIndex + itemsPerPage) : [];
 
-  if (loading) return <p className="text-center text-gray-600">Loading favourites...</p>;
-  if (error) return <p className="text-red-600 text-center">Error: {error}</p>;
-  if (!Array.isArray(favourites) || favourites.length === 0)
-    return <p className="text-center text-gray-500">No favourites found for this user.</p>;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  // Loading and error states...
+  if (loading) return <div className="text-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-200 border-t-orange-500 mx-auto"></div><p className="mt-4 text-gray-600">Loading your favourites...</p></div>;
+  if (error) return <p className="text-red-600 text-center py-20">Error: {error}</p>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">My Favourites</h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayedFavourites.map((fav, index) => {
-          const product = fav?.product || {};
-          return (
-            <motion.div
-              key={fav?.id || index}
-              className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col justify-between"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <img
-                src={product.product_image_url || "/placeholder.jpg"}
-                alt={product.name || "Product Image"}
-                className="w-full h-48 object-cover rounded-md mb-4"
-              />
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold text-gray-800">{product.name}</h2>
-                <p className="text-gray-600 mt-1 mb-3">
-                  {typeof product.price === "number" ? `$${product.price.toFixed(2)}` : "N/A"}
+    <div>
+      <header className="mb-10">
+        <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center">
+                <Heart className="w-7 h-7 text-red-500"/>
+            </div>
+            <div>
+                <h1 className="text-3xl font-extrabold text-gray-900">My Favourites</h1>
+                <p className="text-gray-600 mt-1">
+                    You have {favourites.length} item{favourites.length !== 1 ? 's' : ''} saved for later.
                 </p>
-              </div>
+            </div>
+        </div>
+      </header>
 
-              <div className="flex justify-between items-center mt-4">
-                <button
-                  className="p-2 text-green-600 hover:text-green-600 transition"
-                  title="Add to cart"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                </button>
-
-                <button
-                  onClick={() => handleDeleteConfirmation(fav?.id)}
-                  className="p-2 text-red-500 hover:text-red-500 transition"
-                  title="Remove"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {favourites.length > itemsPerPage && currentPage < totalPages && (
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="px-6 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition"
+      {displayedFavourites.length > 0 ? (
+        <>
+          <motion.div 
+            className="space-y-5" 
+            variants={containerVariants} 
+            initial="hidden" 
+            animate="visible"
           >
-            Load More
-          </button>
+            {displayedFavourites.map((fav) => (
+              <motion.div 
+                key={fav.id} 
+                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              >
+                {/* We now use the new FavouriteItemRow component */}
+                <FavouriteItemRow
+                  favourite={fav}
+                  onRemove={() => handleDeleteConfirmation(fav.id)}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div className="mt-12">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-20 border-2 border-dashed border-gray-300 rounded-2xl">
+          <PackageX className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">Your Favourites List is Empty</h2>
+          <p className="text-gray-600">Click the heart on any product to save it here for later.</p>
         </div>
       )}
 
+      {/* Your modal still works perfectly */}
       <ConfirmDeletionFavorites
         isOpen={showConfirmDeletion}
         onClose={handleCancelDelete}

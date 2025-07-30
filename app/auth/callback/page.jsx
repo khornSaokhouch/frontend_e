@@ -1,26 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/authStore';
-import { Loader2 } from 'lucide-react'; // A clean spinner icon
+import { Loader2 } from 'lucide-react';
 
-// Reusable SVG icon for the logo, consistent with your other pages.
+// Logo
 const TechLogoIcon = (props) => (
-    <svg width="48" height="48" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <defs>
-            <linearGradient id="loaderLogoGradient" x1="12" y1="20" x2="28" y2="20" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#F472B6"/>
-                <stop offset="1" stopColor="#A78BFA"/>
-            </linearGradient>
-        </defs>
-        <path d="M12 10H28" stroke="url(#loaderLogoGradient)" strokeWidth="3.5" strokeLinecap="round"/>
-        <path d="M20 10V30" stroke="url(#loaderLogoGUI)" strokeWidth="3.5" strokeLinecap="round"/>
-        <path d="M16 30C16 27.7909 17.7909 26 20 26C22.2091 26 24 27.7909 24 30" stroke="url(#loaderLogoGradient)" strokeWidth="3.5" strokeLinecap="round"/>
-    </svg>
+  <svg width="48" height="48" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <defs>
+      <linearGradient id="loaderLogoGradient" x1="12" y1="20" x2="28" y2="20" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#F472B6" />
+        <stop offset="1" stopColor="#A78BFA" />
+      </linearGradient>
+    </defs>
+    <path d="M12 10H28" stroke="url(#loaderLogoGradient)" strokeWidth="3.5" strokeLinecap="round" />
+    <path d="M20 10V30" stroke="url(#loaderLogoGradient)" strokeWidth="3.5" strokeLinecap="round" />
+    <path d="M16 30C16 27.7909 17.7909 26 20 26C22.2091 26 24 27.7909 24 30" stroke="url(#loaderLogoGradient)" strokeWidth="3.5" strokeLinecap="round" />
+  </svg>
 );
 
-export default function AuthCallbackPage() {
+function AuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { loginWithToken } = useAuthStore();
@@ -40,12 +40,12 @@ export default function AuthCallbackPage() {
           const user = await loginWithToken(token);
           if (user?.role === 'admin') {
             router.push(`/admin/${user.id}/dashboard`);
-          } else if (user?.role === 'owner') { // Corrected role check from your code
+          } else if (user?.role === 'owner') {
             router.push(`/owner/${user.id}/bookings`);
-          } else { // Default to user profile
+          } else {
             router.push(`/profile/${user.id}/myprofile`);
           }
-        } catch (err) {
+        } catch {
           router.push('/login?error=auth_failed');
         }
       } else {
@@ -54,25 +54,33 @@ export default function AuthCallbackPage() {
     }
 
     handleAuth();
-  }, [searchParams, loginWithToken, router]); // Dependency array updated for best practice
+  }, [searchParams, loginWithToken, router]);
 
-  // ✅ NEW: The polished loading screen UI
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-center p-4">
-        <div className="flex items-center gap-3 mb-6">
-            <TechLogoIcon />
-            <span className="text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text">
-                E-COMMERCES
-            </span>
-        </div>
-      
-        <div className="flex items-center text-lg text-gray-700">
-            <Loader2 className="animate-spin h-6 w-6 mr-3 text-purple-600" />
-            <span>Authenticating, please wait...</span>
-        </div>
-        <p className="text-sm text-gray-500 mt-4">
-            Securing your session and redirecting you.
-        </p>
+      <div className="flex items-center gap-3 mb-6">
+        <TechLogoIcon />
+        <span className="text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text">
+          E-COMMERCES
+        </span>
+      </div>
+
+      <div className="flex items-center text-lg text-gray-700">
+        <Loader2 className="animate-spin h-6 w-6 mr-3 text-purple-600" />
+        <span>Authenticating, please wait...</span>
+      </div>
+      <p className="text-sm text-gray-500 mt-4">
+        Securing your session and redirecting you.
+      </p>
     </div>
+  );
+}
+
+// ⛑️ Wrap in Suspense in case you're using searchParams
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+      <AuthCallbackPage />
+    </Suspense>
   );
 }

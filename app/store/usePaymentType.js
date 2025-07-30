@@ -98,4 +98,7 @@ export const usePaymentTypeStore = create((set, get) => ({
       return false;
     }
   },
+
+  
+  setCurrentPaymentType: (id) => set({ currentPaymentType: id }),
 }));

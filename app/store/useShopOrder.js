@@ -73,12 +73,15 @@ fetchOrder: async (id) => {
   createOrder: async (orderData) => {
     set({ loading: true, error: null });
     try {
-      const newOrder = await request('/shop-orders', 'POST', orderData);
+      const response = await request('/shop-orders', 'POST', orderData);
+      const createdOrder = response.order; // ← Extract the actual order with ID
+  
       set((state) => ({
-        orders: [...state.orders, newOrder],
+        orders: [...state.orders, createdOrder],
         loading: false,
       }));
-      return newOrder;
+  
+      return createdOrder;
     } catch (err) {
       set({
         error: err?.response?.data?.message || err?.message || 'Failed to create order',
@@ -87,6 +90,7 @@ fetchOrder: async (id) => {
       return null;
     }
   },
+  
 
   // Update an existing order
   updateOrder: async (id, orderData) => {

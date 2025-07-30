@@ -78,9 +78,7 @@ export const useShoppingCartStore = create((set, get) => ({
       set({ loading: false });
     }
   },
-  
-  
-  
+
   deleteCart: async (id) => {
     set({ loading: true, error: null });
     try {
@@ -104,6 +102,37 @@ export const useShoppingCartStore = create((set, get) => ({
       set({ error: err.message || "Failed to fetch cart", loading: false });
     }
   },
+
+  updateCartItemQuantity: async (cartId, itemId, newQty) => {
+    try {
+      await request(`/shopping-carts/${cartId}/items/${itemId}`, "PATCH", {
+        qty: newQty,
+      });
+
+      get().optimisticallyUpdateItemQuantity(cartId, itemId, newQty);
+    } catch (err) {
+      set({ error: err.message || "Failed to update item quantity" });
+    }
+  },
+
+  optimisticallyUpdateItemQuantity: (cartId, productItemId, newQty) => {
+    set((state) => {
+      const updatedCarts = state.carts.map((cart) => {
+        if (cart.id !== cartId) return cart;
+        return {
+          ...cart,
+          items: cart.items.map((item) =>
+            item.product_item_id === productItemId
+              ? { ...item, qty: newQty }
+              : item
+          ),
+        };
+      });
+      return { carts: updatedCarts };
+    });
+  },
+  
+  
 
   clearSelectedCart: () => set({ selectedCart: null }),
 }));

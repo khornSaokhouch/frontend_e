@@ -1,44 +1,29 @@
+// File: app/user/[id]/checkout/page.js (or your checkout page's path)
+
 "use client";
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useShoppingCartStore } from "../../../store/useShoppingCart";
 import { useShippingMethodStore } from "../../../store/useShippingMethod";
 import { useUserPaymentMethodStore } from "../../../store/useUserPaymentMethod";
 import { useShopOrderStore } from "../../../store/useShopOrder";
-import { useRouter } from "next/navigation";
+import ManagePaymentMethodsModal from "../../../components/user/checkout/ManagePaymentMethodsModal";
 
 export default function CheckoutPage() {
   const { id: userId } = useParams();
   const router = useRouter();
 
   const { carts, fetchCartsByUserId } = useShoppingCartStore();
-  const {
-    shippingMethods,
-    loading: shippingLoading,
-    error: shippingError,
-    fetchShippingMethods,
-  } = useShippingMethodStore();
-
-  const {
-    userPaymentMethods,
-    loading: paymentLoading,
-    error: paymentError,
-    fetchUserPaymentMethods,
-  } = useUserPaymentMethodStore();
-
-  const [shippingAddress, setShippingAddress] = useState({
-    address: "",
-    city: "",
-    postalCode: "",
-    country: "",
-  });
+  const { shippingMethods, fetchShippingMethods } = useShippingMethodStore();
+  const { userPaymentMethods, fetchUserPaymentMethods } = useUserPaymentMethodStore();
   const { createOrder } = useShopOrderStore();
 
+  const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
   const [shippingMethodId, setShippingMethodId] = useState(null);
   const [paymentMethodId, setPaymentMethodId] = useState(null);
   const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showManagePaymentModal, setShowManagePaymentModal] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -49,46 +34,40 @@ export default function CheckoutPage() {
   }, [userId, fetchCartsByUserId, fetchShippingMethods, fetchUserPaymentMethods]);
 
   useEffect(() => {
-    if (shippingMethods.length > 0) {
-      setShippingMethodId(shippingMethods[0].id);
-    }
-  }, [shippingMethods]);
+    if (!shippingMethodId && shippingMethods.length > 0) setShippingMethodId(shippingMethods[0].id);
+  }, [shippingMethods, shippingMethodId]);
 
   useEffect(() => {
-    if (userPaymentMethods.length > 0) {
-      setPaymentMethodId(userPaymentMethods[0].id);
-    }
-  }, [userPaymentMethods]);
+    if (!paymentMethodId && userPaymentMethods.length > 0) setPaymentMethodId(userPaymentMethods[0].id);
+  }, [userPaymentMethods, paymentMethodId]);
 
   const cart = carts?.[0] || { items: [] };
+  const selectedShippingMethod = shippingMethods.find((s) => s.id === shippingMethodId);
 
-  const handleAddressChange = (e) => {
-    setShippingAddress({ ...shippingAddress, [e.target.name]: e.target.value });
+  const handleAddressChange = (e) => setShippingAddress({ ...shippingAddress, [e.target.name]: e.target.value });
+  
+  const calculateTotal = () => {
+    const itemsTotal = cart.items.reduce((sum, item) => sum + (item.product_item?.product?.price ?? 0) * (item.qty ?? 0), 0);
+    const shippingCost = selectedShippingMethod?.price ?? 0;
+    return itemsTotal + shippingCost;
   };
 
-  const calculateTotal = () => {
-    const itemsTotal = cart.items.reduce((sum, item) => {
-      const price = item.product_item?.product?.price ?? 0;
-      return sum + price * (item.qty ?? 0);
-    }, 0);
-  
-    const shippingCost =
-      shippingMethods.find((s) => s.id === shippingMethodId)?.cost ?? 0;
-  
-    return itemsTotal + shippingCost;
+  const handlePaymentMethodSuccess = () => {
+    fetchUserPaymentMethods(userId);
   };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    setSubmitting(true);
+    setSubmitError(null);
+
     const fullAddress = `${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.postalCode}, ${shippingAddress.country}`;
-  
     const order_lines = cart.items.map((item) => ({
       product_item_id: item.product_item_id,
       quantity: item.qty,
       price: item.product_item?.product?.price || 0,
     }));
-  
+
     const order = {
       user_id: Number(userId),
       order_date: new Date().toISOString(),
@@ -99,178 +78,101 @@ export default function CheckoutPage() {
       order_status_id: 1,
       order_lines,
     };
-  
-    setSubmitting(true);
-    setSubmitError(null);
-    setSubmitSuccess(false);
-  
+
     try {
-      const createdOrder = await createOrder(order); // expect created order object with ID
-      setSubmitSuccess(true);
-      // Redirect to confirmation page with order ID
+      const createdOrder = await createOrder(order);
       router.push(`/user/${userId}/checkout/${createdOrder.id}`);
     } catch (error) {
-      setSubmitError(error.message || 'Failed to submit order');
-      alert('Failed to submit order');
+      setSubmitError(error.message || "Failed to submit order. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
-  if (shippingLoading || paymentLoading)
-    return (
-      <div className="flex justify-center items-center h-64 text-gray-500 text-lg">
-        Loading checkout data...
-      </div>
-    );
-
-  if (shippingError)
-    return (
-      <div className="text-red-600 font-semibold">
-        Error loading shipping methods: {shippingError}
-      </div>
-    );
-
-  if (paymentError)
-    return (
-      <div className="text-red-600 font-semibold">
-        Error loading payment methods: {paymentError}
-      </div>
-    );
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg">
-      <h1 className="text-3xl font-bold mb-6 text-center">Checkout</h1>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 text-center mb-12">Checkout</h1>
+        
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="lg:grid lg:grid-cols-3 lg:gap-x-12">
+            <main className="lg:col-span-2 space-y-8">
+              <section className="bg-white p-6 rounded-lg shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 border-b pb-4 mb-6">Shipping Address</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {Object.entries({Address: 'address', City: 'city', 'Postal Code': 'postalCode', Country: 'country'}).map(([label, name]) => (
+                    <div key={name}>
+                      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                      <input type="text" id={name} name={name} value={shippingAddress[name]} onChange={handleAddressChange} required className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-      {submitSuccess && (
-        <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
-          Order submitted successfully!
-        </div>
-      )}
+              <section className="bg-white p-6 rounded-lg shadow-sm">
+                 <h2 className="text-xl font-semibold text-gray-900 border-b pb-4 mb-6">Shipping Method</h2>
+                 <div className="space-y-4">
+                  {shippingMethods.map((method) => (
+                    <label key={method.id} className={`flex justify-between items-center p-4 border rounded-lg cursor-pointer transition-all ${shippingMethodId === method.id ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-300'}`}>
+                      <input type="radio" name="shippingMethod" value={method.id} checked={shippingMethodId === method.id} onChange={(e) => setShippingMethodId(Number(e.target.value))} className="hidden"/>
+                      <span className="font-medium text-gray-800">{method.name}</span>
+                      <span className="font-semibold text-gray-900">${(method.price ?? 0).toFixed(2)}</span>
+                    </label>
+                  ))}
+                 </div>
+              </section>
 
-      {submitError && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-          {submitError}
-        </div>
-      )}
+              <section className="bg-white p-6 rounded-lg shadow-sm">
+                 <h2 className="text-xl font-semibold text-gray-900 border-b pb-4 mb-6">Payment Method</h2>
+                 <div className="space-y-4">
+                  {userPaymentMethods.map((method) => (
+                    <label key={method.id} className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethodId === method.id ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-300'}`}>
+                       <input type="radio" name="paymentMethod" value={method.id} checked={paymentMethodId === method.id} onChange={(e) => setPaymentMethodId(Number(e.target.value))} className="hidden"/>
+                       <span className="font-medium text-gray-800">{method.provider} ending in {method.card_number?.slice(-4)}</span>
+                    </label>
+                  ))}
+                 </div>
+                 <button type="button" onClick={() => setShowManagePaymentModal(true)} className="mt-6 text-sm font-semibold text-orange-600 hover:text-orange-500">
+                  + Add or Manage Payment Methods
+                </button>
+              </section>
+            </main>
 
-      <form onSubmit={handleSubmit} className="space-y-10" noValidate>
-        {/* Shipping Address */}
-        <section>
-          <h2 className="text-xl font-semibold mb-5 border-b pb-2">
-            Shipping Address
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {["address", "city", "postalCode", "country"].map((field) => (
-              <div key={field}>
-                <label
-                  htmlFor={field}
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {field.charAt(0).toUpperCase() + field.slice(1)}
-                </label>
-                <input
-                  type="text"
-                  id={field}
-                  name={field}
-                  value={shippingAddress[field]}
-                  onChange={handleAddressChange}
-                  required
-                  className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                />
+            <aside className="lg:col-span-1 mt-10 lg:mt-0">
+              <div className="sticky top-6 bg-white p-6 rounded-lg shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 border-b pb-4 mb-6">Order Summary</h2>
+                <ul className="space-y-4 text-sm text-gray-600">
+                  {cart.items.map((item) => (
+                    <li key={item.product_item_id} className="flex justify-between">
+                      <span>{item.product_item?.product?.name} x {item.qty}</span>
+                      <span className="font-medium text-gray-900">${((item.product_item?.product?.price ?? 0) * (item.qty ?? 0)).toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="border-t my-6 pt-6 space-y-4 text-sm">
+                  <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">${cart.items.reduce((sum, item) => sum + (item.product_item?.product?.price ?? 0) * (item.qty ?? 0), 0).toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium text-gray-900">${(selectedShippingMethod?.price ?? 0).toFixed(2)}</span></div>
+                </div>
+                <div className="border-t my-6 pt-6 flex justify-between text-base font-bold text-gray-900">
+                  <span>Order total</span><span>${calculateTotal().toFixed(2)}</span>
+                </div>
+                {submitError && <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-md">{submitError}</div>}
+                <button type="submit" disabled={submitting || !paymentMethodId || !shippingMethodId} className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-semibold text-base transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
+                  {submitting ? "Placing Order..." : "Place Order"}
+                </button>
               </div>
-            ))}
+            </aside>
           </div>
-        </section>
+        </form>
+      </div>
 
-        {/* Shipping Method */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-            Shipping Method
-          </h2>
-          <select
-            value={shippingMethodId ?? ""}
-            onChange={(e) => setShippingMethodId(Number(e.target.value))}
-            className="border border-gray-300 p-3 rounded w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-orange-400"
-            required
-          >
-            {shippingMethods.map((method) => (
-              <option key={method.id} value={method.id}>
-                {method.name} (${(method.price ?? 0).toFixed(2)})
-              </option>
-            ))}
-          </select>
-        </section>
-
-        {/* Payment Method */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-            Payment Method
-          </h2>
-          <select
-            value={paymentMethodId ?? ""}
-            onChange={(e) => setPaymentMethodId(Number(e.target.value))}
-            className="border border-gray-300 p-3 rounded w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-orange-400"
-            required
-          >
-            {userPaymentMethods.map((method) => (
-              <option key={method.id} value={method.id}>
-                {method.provider
-                  ? `${method.provider} - ****${method.card_number?.slice(-4)}`
-                  : method.type}
-              </option>
-            ))}
-          </select>
-        </section>
-
-        {/* Order Summary */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-            Order Summary
-          </h2>
-          <ul className="mb-6 divide-y divide-gray-200">
-            {cart.items.length === 0 && (
-              <li className="py-4 text-gray-500">No items in cart.</li>
-            )}
-            {cart.items.map((item) => {
-              const product = item.product_item?.product;
-              const price = product?.price ?? 0;
-              return (
-                <li key={item.product_item_id} className="flex justify-between py-3">
-                  <span className="font-medium text-gray-900">
-                    {product?.name} x {item.qty}
-                  </span>
-                  <span className="font-semibold">
-                    ${(price * (item.qty ?? 0)).toFixed(2)}
-                  </span>
-                </li>
-              );
-            })}
-            <li className="flex justify-between py-3 font-semibold border-t border-gray-300">
-              <span>Shipping</span>
-              <span>
-                $
-                {(
-                  shippingMethods.find((s) => s.id === shippingMethodId)?.price ?? 0
-                ).toFixed(2)}
-              </span>
-            </li>
-            <li className="flex justify-between py-4 font-bold text-lg border-t border-gray-300">
-              <span>Total</span>
-              <span>${calculateTotal().toFixed(2)}</span>
-            </li>
-          </ul>
-        </section>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className={`w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold transition-shadow shadow-md ${
-            submitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {submitting ? "Submitting..." : "Submit Order"}
-        </button>
-      </form>
+      {showManagePaymentModal && (
+        <ManagePaymentMethodsModal
+          userId={userId}
+          onClose={() => setShowManagePaymentModal(false)}
+          onSuccess={handlePaymentMethodSuccess}
+        />
+      )}
     </div>
   );
 }
