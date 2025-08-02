@@ -57,8 +57,7 @@ export default function Products() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">All Products</h1>
-          <p className="text-slate-600">Discover our latest collection</p>
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">Products</h1>
         </div>
         <div className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
           {products.length} {products.length === 1 ? "product" : "products"}
@@ -66,7 +65,7 @@ export default function Products() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product) => {
+        {products.slice(0, 8).map((product) => {
           const isFavourite = favourites?.some((fav) => fav?.product_id === product.id)
           return (
             <ProductCard

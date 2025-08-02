@@ -27,7 +27,7 @@ export default function CompanyOrdersPage() {
   const { id: companyId } = useParams();
 
   const { orders, fetchOrders, loading: ordersLoading, deleteOrder } = useShopOrderStore();
-  const { orderStatuses, fetchOrderStatuses, updateOrderStatus, loading: statusesLoading } = useOrderStatusStore();
+  const { orderStatuses, fetchOrderStatuses, updateShopOrderStatus, loading: statusesLoading } = useOrderStatusStore();
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -56,7 +56,7 @@ export default function CompanyOrdersPage() {
   const handleSaveStatus = async (orderId, newStatusId) => {
     setActionLoading(true);
     try {
-      await updateOrderStatus(orderId, newStatusId);
+      await updateShopOrderStatus(orderId, newStatusId);
       await fetchOrders(companyId); // Refetch to show updated data
       toast.success("Order status updated successfully!");
       setIsEditModalOpen(false);

@@ -58,23 +58,51 @@ export const useOrderStatusStore = create((set, get) => ({
     }
   },
 
-   // ✅ Update order status by order ID
-   updateOrderStatus: async (orderId, statusId) => {
-    set({ loading: true, error: null });
-    try {
-      const data = await request(`/shop-orders/${orderId}/status`, 'PATCH', {
-        order_status_id: statusId,
-      });
-      set({ currentOrderStatus: data.order?.order_status || null, loading: false });
-      return data;
-    } catch (err) {
-      set({
-        error: err.response?.data?.message || err.message || 'Failed to update order status',
-        loading: false,
-      });
-      return null;
-    }
-  },
+// Update order status entity (PUT /order-statuses/{id})
+// Update order status entity (PUT /order-statuses/{id})
+updateOrderStatus: async (id, updatedData) => {
+  set({ loading: true, error: null });
+  try {
+    const response = await request(`/order-statuses/${id}`, 'PUT', updatedData);
+    const updatedStatus = response.data;
+
+    set((state) => ({
+      orderStatuses: state.orderStatuses.map((status) =>
+        status.id === id ? updatedStatus : status
+      ),
+      currentOrderStatus: updatedStatus,
+      loading: false,
+    }));
+
+    return updatedStatus;
+  } catch (err) {
+    set({
+      error: err.response?.data?.message || err.message || 'Failed to update order status',
+      loading: false,
+    });
+    return null;
+  }
+},
+
+
+// Update shop order status by order ID (PATCH /shop-orders/{orderId}/status)
+updateShopOrderStatus: async (orderId, statusId) => {
+  set({ loading: true, error: null });
+  try {
+    const data = await request(`/shop-orders/${orderId}/status`, 'PATCH', {
+      order_status_id: statusId,
+    });
+    set({ currentOrderStatus: data.order?.order_status || null, loading: false });
+    return data;
+  } catch (err) {
+    set({
+      error: err.response?.data?.message || err.message || 'Failed to update order status',
+      loading: false,
+    });
+    return null;
+  }
+},
+
 
 // Delete shop order by ID
 deleteOrder: async (id) => {
@@ -94,5 +122,27 @@ deleteOrder: async (id) => {
     return false;
   }
 },
+
+// Delete order status by ID
+deleteOrderStatus: async (id) => {
+  set({ loading: true, error: null });
+  try {
+    await request(`/order-statuses/${id}`, 'DELETE');
+
+    set((state) => ({
+      orderStatuses: state.orderStatuses.filter((status) => status.id !== id),
+      loading: false,
+    }));
+
+    return true;
+  } catch (err) {
+    set({
+      error: err.response?.data?.message || err.message || 'Failed to delete order status',
+      loading: false,
+    });
+    return false;
+  }
+},
+
 
 }));

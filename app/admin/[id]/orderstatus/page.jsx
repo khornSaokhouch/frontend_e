@@ -43,6 +43,8 @@ export default function OrderStatusManager() {
     fetchOrderStatuses();
   }, [fetchOrderStatuses]);
 
+
+
   const openModal = (type, data = null) => {
     setModalState({ type, data });
     if (type === 'edit' && data) {

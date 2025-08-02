@@ -7,16 +7,22 @@ export const useStore = create((set) => ({
   error: null,
 
   fetchStores: async () => {
-    // This is a global loading state, appropriate for fetching the main list
-    set({ loading: true, error: null });
+    set({ loading: true, error: null }); // Start loading, reset error
     try {
       const res = await request("/stores", "GET");
-      // It's good practice to ensure the response is an array
-      set({ stores: Array.isArray(res) ? res : [], loading: false });
+      set({ 
+        stores: Array.isArray(res) ? res : [], // Ensure stores is always an array
+        loading: false,
+      });
     } catch (err) {
-      set({ error: "Failed to fetch stores", loading: false, stores: [] });
+      set({ 
+        error: "Failed to fetch stores", 
+        loading: false, 
+        stores: [] 
+      });
     }
   },
+  
 
   // IMPROVEMENT 1: Removed state setting. This is now a pure data-fetching utility.
   // The component calling this should manage its own loading/error state if needed.

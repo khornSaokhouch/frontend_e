@@ -6,13 +6,19 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         port: '',
-        pathname: '/**', // This allows any image path from the Google domain
+        pathname: '/**',
       },
-       {
+      {
         protocol: 'http',
         hostname: '127.0.0.1',
-        port: '8000', // The port is important!
-        pathname: '/storage/**', // Allows any image inside your storage folder
+        port: '8000',
+        pathname: '/storage/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'backend-e-rpi0.onrender.com',
+        port: '',
+        pathname: '/storage/**',
       },
     ],
   },

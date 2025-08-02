@@ -326,7 +326,7 @@ export default function Navbar() {
             <span className="ml-1">Location : Cambodia</span>
           </Link>
           <Link
-            href="/products"
+            href={ id? `/user/${authUser?.id}/store` : "/store"}
             className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
           >
             <ShoppingCart className="h-5 w-5" />
