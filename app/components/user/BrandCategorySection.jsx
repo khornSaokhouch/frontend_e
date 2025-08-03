@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { useUserStore } from "../../store/userStore";
 
 const BrandCategorySection = () => {
-  const userId = useUserStore(state => state.user?.id);
+  const userId = useUserStore((state) => state.user?.id);
   const { categories, fetchCategories } = useCategoryStore();
   const { stores, fetchStores } = useStore();
   const router = useRouter();
@@ -34,7 +34,9 @@ const BrandCategorySection = () => {
         {/* Featured Stores Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">FEATURED STORES</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              FEATURED STORES
+            </h2>
             <motion.button
               aria-label="View all stores"
               className="bg-gray-100 text-gray-600 rounded-full px-4 py-2 text-sm"
@@ -56,7 +58,10 @@ const BrandCategorySection = () => {
           <div className="grid grid-cols-4 gap-4">
             {stores && stores.length > 0 ? (
               stores.slice(0, 8).map((store) => (
-                <div key={store.id} className="flex justify-center items-center p-2">
+                <div
+                  key={store.id}
+                  className="flex justify-center items-center p-2"
+                >
                   <Image
                     src={store.logo_url || "/placeholder-store.png"} // Adjust property name for store logo if needed
                     alt={store.name}
@@ -76,7 +81,9 @@ const BrandCategorySection = () => {
         {/* Top Categories Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">TOP CATEGORIES</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              TOP CATEGORIES
+            </h2>
             <motion.button
               aria-label="View all categories"
               className="bg-gray-100 text-gray-600 rounded-full px-4 py-2 text-sm"
@@ -107,13 +114,16 @@ const BrandCategorySection = () => {
               >
                 <div className="w-20 h-20 relative mb-3 rounded-full overflow-hidden bg-gray-100">
                   <Image
-                    src={category.image_url || category.image || "/placeholder.jpg"}
+                    src={category.image_url || "/placeholder.jpg"}
                     alt={`${category.name} logo`}
                     fill
                     style={{ objectFit: "contain" }}
+                    unoptimized
                   />
                 </div>
-                <p className="text-sm font-medium text-gray-800 text-center">{category.name}</p>
+                <p className="text-sm font-medium text-gray-800 text-center">
+                  {category.name}
+                </p>
               </motion.div>
             ))}
           </div>
