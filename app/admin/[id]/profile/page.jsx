@@ -10,8 +10,6 @@ import {
   User,
   Mail,
   Loader2,
-  ShieldCheck,
-  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast"; // Import the toast function
 
@@ -57,6 +55,7 @@ export default function EditProfilePage() {
 
   const [formData, setFormData] = useState({ name: "", image: null });
   const [imagePreview, setImagePreview] = useState(null);
+  const [imgError, setImgError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -65,15 +64,23 @@ export default function EditProfilePage() {
   }, [id, fetchUserById]);
 
   useEffect(() => {
-    if (user) setFormData({ name: user.name || "", image: null });
+    if (user) {
+      setFormData({ name: user.name || "", image: null });
+      setImagePreview(null);
+      setImgError(false);
+    }
   }, [user]);
 
   const getCleanImageUrl = (url) => {
     if (!url) return "/default-avatar.png";
-    const lastHttpIndex = url.lastIndexOf("http");
-    if (lastHttpIndex > 0) return url.substring(lastHttpIndex);
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
     return url;
   };
+
+  // Determine which image URL to show: new preview, user URL, or default
+  const currentImageUrl = imagePreview || getCleanImageUrl(user?.profile_image_url);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -81,6 +88,7 @@ export default function EditProfilePage() {
       const file = files[0];
       setFormData((prev) => ({ ...prev, image: file }));
       setImagePreview(URL.createObjectURL(file));
+      setImgError(false);
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -106,8 +114,11 @@ export default function EditProfilePage() {
       await updateUser(id, data);
       toast.success("Profile updated successfully!", { id: loadingToast });
       setIsModalOpen(false);
-      // We don't need to redirect immediately, let the user see the success message.
-      // The sidebar will re-fetch and update the user's name/image automatically.
+      setImagePreview(null);
+      setImgError(false);
+      // Refetch user to get updated profile_image_url (with new signed URL)
+      await fetchUserById(id);
+      // Optionally you can refresh or redirect here if needed
       // router.push(`/profile/${id}/myprofile`);
     } catch (err) {
       toast.error(err.message || "Failed to update profile.", {
@@ -115,7 +126,6 @@ export default function EditProfilePage() {
       });
     } finally {
       setIsSubmitting(false);
-      // If modal is still open, close it
       if (isModalOpen) setIsModalOpen(false);
     }
   };
@@ -127,8 +137,6 @@ export default function EditProfilePage() {
       </div>
     );
   }
-
-  const currentImageUrl = getCleanImageUrl(user.profile_image_url);
 
   return (
     <>
@@ -152,13 +160,14 @@ export default function EditProfilePage() {
             <div className="flex items-center gap-5">
               <div className="relative">
                 <Image
-                  src={imagePreview || currentImageUrl}
+                  src={imgError ? "/default-avatar.png" : currentImageUrl}
                   alt="Profile Preview"
                   width={96}
                   height={96}
                   className="w-24 h-24 rounded-full object-cover bg-gray-200"
                   unoptimized
                   priority
+                  onError={() => setImgError(true)}
                 />
                 <label
                   htmlFor="image-upload"
