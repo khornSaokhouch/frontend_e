@@ -32,6 +32,12 @@ const nextConfig = {
         port: '',
         pathname: '/category_images/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'laravel-images-b2.s3.us-east-005.backblazeb2.com',
+        port: '',
+        pathname: '/profile_images/**',
+      },
     ],
   },
 };
