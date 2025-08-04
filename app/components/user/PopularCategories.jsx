@@ -31,13 +31,11 @@ const PopularCategories = () => {
           >
             <div className="relative w-24 h-24 rounded-full bg-gray-100 overflow-hidden shadow-sm border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-lg">
               <Image
-                src={category.image_url || "/fallback-image.png"}
-                alt={category.name}
+                src={category.image_url || "/placeholder.jpg"}
+                alt={`${category.name} logo`}
                 fill
-                sizes="96px"
-                style={{ objectFit: "cover" }}
-                priority
-                className="rounded-full"
+                style={{ objectFit: "contain" }}
+                unoptimized
               />
             </div>
             <p className="text-gray-700 mt-2 text-sm text-center truncate max-w-[96px]">
