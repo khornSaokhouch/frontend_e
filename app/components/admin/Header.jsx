@@ -3,10 +3,12 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { AnimatePresence, motion } from "framer-motion"
-import { Menu, Search, Bell, ChevronDown, UserCircle, LogOut, Settings } from "lucide-react"
+import {
+  Menu, Search, Bell, ChevronDown,
+  UserCircle, LogOut, Settings
+} from "lucide-react"
 import { useNotificationsStore } from "../../store/useNotificationsStore"
 
-// Modern US Flag component
 const UsaFlagIcon = () => (
   <div className="h-5 w-7 rounded-sm overflow-hidden border border-gray-200">
     <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 7410 3900">
@@ -21,7 +23,6 @@ const UsaFlagIcon = () => (
   </div>
 )
 
-// Modern Dropdown Menu component
 const DropdownMenu = ({ children, open, className = "" }) => (
   <AnimatePresence>
     {open && (
@@ -50,14 +51,6 @@ export default function Header({
   const [isProfileOpen, setProfileOpen] = useState(false)
   const [isLanguageOpen, setLanguageOpen] = useState(false)
   const fetchNotifications = useNotificationsStore((state) => state.fetchNotifications)
-  const markEmailRead = useNotificationsStore((state) => state.markEmailRead)
-  const emails = useNotificationsStore((state) => state.emails)
-
-  const getCleanImageUrl = (url) => {
-    if (!url) return "/default-avatar.png"
-    const lastHttpIndex = url.lastIndexOf("http")
-    return lastHttpIndex > 0 ? url.substring(lastHttpIndex) : url
-  }
 
   useEffect(() => {
     fetchNotifications()
@@ -72,18 +65,16 @@ export default function Header({
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left Side */}
+        {/* Left */}
         <div className="flex items-center gap-4">
-          {/* Mobile Menu Button */}
           <button
             type="button"
-            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 md:hidden"
+            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 md:hidden"
             onClick={onMenuButtonClick}
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* Search Bar */}
           <div className="relative hidden md:block">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-gray-400" />
@@ -91,17 +82,16 @@ export default function Header({
             <input
               type="text"
               placeholder="Search anything..."
-              className="block w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:w-80"
+              className="block w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:w-80"
             />
           </div>
         </div>
 
-        {/* Right Side */}
+        {/* Right */}
         <div className="flex items-center gap-2">
-          {/* Notifications */}
           <Link
             href={bellHref}
-            className="relative p-2.5 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+            className="relative p-2.5 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             onClick={handleViewNotifications}
           >
             <Bell className="h-5 w-5" />
@@ -110,50 +100,43 @@ export default function Header({
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 className="absolute -top-1 -right-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white shadow-lg"
-                aria-label={`${notificationCount} new notifications`}
               >
                 {notificationCount > 99 ? "99+" : notificationCount}
               </motion.span>
             )}
           </Link>
 
-          {/* Language Switcher */}
           <div className="relative">
             <button
               onClick={() => {
                 setLanguageOpen(!isLanguageOpen)
                 setProfileOpen(false)
               }}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-100 transition-all duration-200"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-100"
             >
               <UsaFlagIcon />
-              <span className="hidden text-sm font-medium sm:block">EN</span>
-              <ChevronDown
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isLanguageOpen ? "rotate-180" : ""}`}
-              />
+              <span className="hidden sm:block text-sm font-medium">EN</span>
+              <ChevronDown className={`h-4 w-4 text-gray-400 ${isLanguageOpen ? "rotate-180" : ""}`} />
             </button>
 
             <DropdownMenu open={isLanguageOpen}>
-              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                Language
-              </div>
-              <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+              <div className="px-3 py-2 text-xs font-semibold text-gray-500 border-b">Language</div>
+              <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
                 <UsaFlagIcon />
                 <span>English</span>
               </button>
-              <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <div className="h-5 w-7 rounded-sm bg-red-500"></div>
+              <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <div className="h-5 w-7 bg-red-500 rounded-sm"></div>
                 <span>Spanish</span>
               </button>
-              <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <div className="h-5 w-7 rounded-sm bg-blue-500"></div>
+              <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50">
+                <div className="h-5 w-7 bg-blue-500 rounded-sm"></div>
                 <span>French</span>
               </button>
             </DropdownMenu>
           </div>
 
-          {/* Divider */}
-          <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+          <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block" />
 
           {/* Profile Dropdown */}
           <div className="relative">
@@ -162,14 +145,14 @@ export default function Header({
                 setProfileOpen(!isProfileOpen)
                 setLanguageOpen(false)
               }}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100"
             >
               {loading ? (
                 <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />
               ) : (
                 <div className="relative">
                   <Image
-                    src={getCleanImageUrl(user?.profile_image_url) || "/placeholder.svg"}
+                    src={user?.profile_image_url || "/default-avatar.png"}
                     alt="Profile"
                     width={32}
                     height={32}
@@ -179,18 +162,18 @@ export default function Header({
                 </div>
               )}
 
-              <div className="hidden text-left md:block">
-                <p className="text-sm font-semibold text-gray-900">{loading ? "Loading..." : user?.name || "Admin"}</p>
+              <div className="hidden md:block text-left">
+                <p className="text-sm font-semibold text-gray-900">
+                  {loading ? "Loading..." : user?.name || "Admin"}
+                </p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>
 
-              <ChevronDown
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
-              />
+              <ChevronDown className={`h-4 w-4 text-gray-400 ${isProfileOpen ? "rotate-180" : ""}`} />
             </button>
 
             <DropdownMenu open={isProfileOpen}>
-              <div className="px-4 py-3 border-b border-gray-100">
+              <div className="px-4 py-3 border-b">
                 <p className="text-sm font-semibold text-gray-900">{user?.name || "Admin"}</p>
                 <p className="text-xs text-gray-500">{user?.email || "admin@example.com"}</p>
               </div>
@@ -198,7 +181,7 @@ export default function Header({
               <Link
                 href={`/admin/${adminId}/profile`}
                 onClick={() => setProfileOpen(false)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
               >
                 <UserCircle className="h-4 w-4" />
                 <span>View Profile</span>
@@ -207,19 +190,19 @@ export default function Header({
               <Link
                 href={`/admin/${adminId}/settings`}
                 onClick={() => setProfileOpen(false)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
               >
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </Link>
 
-              <div className="border-t border-gray-100 mt-1">
+              <div className="border-t mt-1">
                 <button
                   onClick={() => {
                     setProfileOpen(false)
                     onLogoutClick()
                   }}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
