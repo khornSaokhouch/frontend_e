@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProductStore } from '../../store/useProductStore';
@@ -6,10 +7,12 @@ import ProductCard from '../user/ProductCard';
 import { useUserStore } from '../../store/userStore';
 import { toast } from 'react-hot-toast';
 import { useFavouritesStore } from '../../store/useFavouritesStore';
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 export default function ProductsByCategoryPage({ categoryId }) {
   const userId = useUserStore(state => state.user?.id);
   const router = useRouter();
+
   const {
     products,
     loading,
@@ -18,20 +21,44 @@ export default function ProductsByCategoryPage({ categoryId }) {
     fetchCategoryById,
   } = useProductStore();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const { categories } = useCategoryStore(); // all categories with promotions
   const [categoryName, setCategoryName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { favourites } = useFavouritesStore(); // <-- Get favourites list
-  const { addFavourite } = useFavouritesStore();
+  const { favourites, addFavourite } = useFavouritesStore();
 
   useEffect(() => {
     if (categoryId) {
       fetchProductsByCategory(categoryId);
-      fetchCategoryById(categoryId).then((category) =>
+      fetchCategoryById(categoryId).then(category =>
         setCategoryName(category?.name || 'Unknown Category')
       );
     }
   }, [categoryId, fetchProductsByCategory, fetchCategoryById]);
+
+  // Get category with promotion
+  const category = categories.find(cat => cat.id === Number(categoryId));
+  const categoryPromotion = category?.promotion || null;
+
+  // Check if a promotion is active (between start and end date)
+  const isPromotionActive = (promotion) => {
+    if (!promotion) return false;
+    const today = new Date();
+    const start = new Date(promotion.start_date);
+    const end = new Date(promotion.end_date);
+    return start <= today && today <= end;
+  };
+
+  // For each product, if product has no promotion, assign category promotion (only if active)
+  const productsWithPromotion = products.map(product => {
+    if (product.promotion && isPromotionActive(product.promotion)) {
+      return product;
+    }
+    if (categoryPromotion && isPromotionActive(categoryPromotion)) {
+      return { ...product, promotion: categoryPromotion };
+    }
+    return product;
+  });
 
   const handleAddFavourite = async (productId) => {
     if (!userId) {
@@ -39,11 +66,10 @@ export default function ProductsByCategoryPage({ categoryId }) {
       return;
     }
 
+    let loadingToastId;
     try {
-      const loadingToastId = toast.loading("Adding to favourites...");
-
+      loadingToastId = toast.loading("Adding to favourites...");
       await addFavourite({ user_id: userId, product_id: productId });
-
       toast.success("Added to favourites!", { id: loadingToastId });
     } catch (err) {
       toast.error(`Failed to add favourite: ${err.message}`, { id: loadingToastId });
@@ -84,10 +110,8 @@ export default function ProductsByCategoryPage({ categoryId }) {
 
       {!loading && !error && products.length > 0 && (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => {
-            // ✅ Safely check if product is favourited
+          {productsWithPromotion.map(product => {
             const isFavourite = favourites?.some(fav => fav?.product_id === product.id);
-
             return (
               <ProductCard
                 key={product.id}

@@ -10,22 +10,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ChevronDown } from "lucide-react"; // Ensure Lucide React is installed
+import { ChevronDown } from "lucide-react";
 
-const SalesDetails = ({ users = [], products = [], companies = [] }) => {
-  // Calculate pending companies count
+const SalesDetails = ({ users = [], products = [], companies = [], orders = [] }) => {
   const pendingCompaniesCount = companies.filter(
-    (c) => c.status && c.status.toLowerCase() === "pending"
+    (c) => c.status?.toLowerCase() === "pending"
   ).length;
 
-  // Prepare data for the chart
   const data = [
     { name: "Users", count: users.length },
     { name: "Products", count: products.length },
     { name: "Pending Companies", count: pendingCompaniesCount },
+    { name: "Order Total", count: orders.length },
   ];
 
-  // Custom Tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -37,31 +35,24 @@ const SalesDetails = ({ users = [], products = [], companies = [] }) => {
         </div>
       );
     }
-
     return null;
   };
 
   return (
     <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
-      {/* Header */}
       <div className="flex justify-between items-center pb-5 mb-5 border-b border-gray-200">
         <h2 className="text-2xl font-semibold text-gray-800">Sales Details</h2>
         <div className="relative inline-block text-left">
           <button
             type="button"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            id="menu-button"
-            aria-expanded="false"
-            aria-haspopup="true"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
             October
             <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
-          {/* Month Selection - Can be expanded to a full dropdown menu */}
         </div>
       </div>
 
-      {/* Chart */}
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer>
           <BarChart
@@ -70,10 +61,7 @@ const SalesDetails = ({ users = [], products = [], companies = [] }) => {
           >
             <CartesianGrid strokeDasharray="4 4" stroke="#e5e7eb" />
             <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} />
-            <YAxis
-              allowDecimals={false}
-              tick={{ fill: "#6b7280", fontSize: 12 }}
-            />
+            <YAxis allowDecimals={false} tick={{ fill: "#6b7280", fontSize: 12 }} />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" fill="#6366f1" radius={[8, 8, 0, 0]} />
           </BarChart>

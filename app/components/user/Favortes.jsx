@@ -1,26 +1,21 @@
-// File: app/profile/[id]/favorites/page.js
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
 import { useFavouritesStore } from "../../store/useFavouritesStore";
 import { toast } from "react-hot-toast";
 import { Heart, PackageX } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Import your new components
 import FavouriteItemRow from "../../components/user/Favourite/FavouriteItemRow"; 
 import Pagination from "../../components/ui/Pagination";
 import ConfirmDeletionFavorites from "../../components/user/ConfirmDeletionFavorites";
 
-export default function FavouritesPage() {
-  // All your state and logic for deletion remains exactly the same
-  const { id: userId } = useParams();
+export default function FavouritesPageClient({ userId }) {
   const { favourites = [], loading, error, fetchFavourites, removeFavourite } = useFavouritesStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [showConfirmDeletion, setShowConfirmDeletion] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const itemsPerPage = 5; // A list view looks better with slightly fewer items per page
+  const itemsPerPage = 5;
 
   useEffect(() => {
     if (userId) fetchFavourites(userId);
@@ -53,66 +48,65 @@ export default function FavouritesPage() {
     setItemToDelete(null);
   };
 
-  // Pagination logic...
   const totalPages = Math.ceil(favourites.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const displayedFavourites = Array.isArray(favourites) ? favourites.slice(startIndex, startIndex + itemsPerPage) : [];
+
+  // Debug output for favourites data:
+  // console.log("Displayed favourites:", displayedFavourites);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
-  // Loading and error states...
-  if (loading) return <div className="text-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-200 border-t-orange-500 mx-auto"></div><p className="mt-4 text-gray-600">Loading your favourites...</p></div>;
+  if (loading) return (
+    <div className="text-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-200 border-t-orange-500 mx-auto"></div>
+      <p className="mt-4 text-gray-600">Loading your favourites...</p>
+    </div>
+  );
+
   if (error) return <p className="text-red-600 text-center py-20">Error: {error}</p>;
 
   return (
     <div>
       <header className="mb-10">
         <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center">
-                <Heart className="w-7 h-7 text-red-500"/>
-            </div>
-            <div>
-                <h1 className="text-3xl font-extrabold text-gray-900">My Favourites</h1>
-                <p className="text-gray-600 mt-1">
-                    You have {favourites.length} item{favourites.length !== 1 ? 's' : ''} saved for later.
-                </p>
-            </div>
+          <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center">
+            <Heart className="w-7 h-7 text-red-500"/>
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900">My Favourites</h1>
+            <p className="text-gray-600 mt-1">
+              You have {favourites.length} item{favourites.length !== 1 ? 's' : ''} saved for later.
+            </p>
+          </div>
         </div>
       </header>
 
       {displayedFavourites.length > 0 ? (
-        <>
-          <motion.div 
-            className="space-y-5" 
-            variants={containerVariants} 
-            initial="hidden" 
-            animate="visible"
-          >
-            {displayedFavourites.map((fav) => (
+        <motion.div 
+          className="space-y-5" 
+          variants={containerVariants} 
+          initial="hidden" 
+          animate="visible"
+        >
+          {displayedFavourites
+            .filter(fav => fav && fav.id) // filter out invalid items
+            .map((fav) => (
               <motion.div 
                 key={fav.id} 
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
               >
-                {/* We now use the new FavouriteItemRow component */}
                 <FavouriteItemRow
                   favourite={fav}
                   onRemove={() => handleDeleteConfirmation(fav.id)}
                 />
               </motion.div>
-            ))}
-          </motion.div>
-
-          <div className="mt-12">
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        </>
+            ))
+          }
+        </motion.div>
       ) : (
         <div className="text-center py-20 border-2 border-dashed border-gray-300 rounded-2xl">
           <PackageX className="w-20 h-20 text-gray-300 mx-auto mb-6" />
@@ -121,7 +115,14 @@ export default function FavouritesPage() {
         </div>
       )}
 
-      {/* Your modal still works perfectly */}
+      <div className="mt-12">
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage}
+        />
+      </div>
+
       <ConfirmDeletionFavorites
         isOpen={showConfirmDeletion}
         onClose={handleCancelDelete}

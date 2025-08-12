@@ -100,7 +100,7 @@ const ProductCategory = () => {
                   style={{ objectFit: "cover" }}
                   className="absolute inset-0"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-transparent"></div>
 
                 {/* ✅ Bottom-left text */}
                 <div className="absolute bottom-4 left-4 text-left px-4 text-white">
@@ -133,7 +133,7 @@ const ProductCategory = () => {
                   backgroundImage: `url(${product.product_image_url || "/placeholder.jpg"})`,
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-transparent"></div>
 
                 {/* ✅ Bottom-left text */}
                 <div className="absolute bottom-4 left-4 text-left px-4 text-white">

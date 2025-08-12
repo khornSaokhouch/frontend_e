@@ -1,142 +1,186 @@
-// components/DealsTable.jsx or components/DealsTable.tsx
+"use client"
 
-import React, { useState } from "react";
-import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react"
+import Image from "next/image"
+import { ChevronLeft, ChevronRight, ChevronDown, TrendingUp } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
-const DealsTable = ({ products }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+const DealsDetails = ({ products }) => {
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 5
+
+  const totalPages = Math.ceil(products.length / pageSize)
 
   // Calculate start and end index for the current page
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
 
   // Get the products for the current page
-  const displayedProducts = products.slice(startIndex, endIndex);
+  const displayedProducts = products.slice(startIndex, endIndex)
 
   // Determine if there's a next page
-  const hasNextPage = endIndex < products.length;
-
+  const hasNextPage = currentPage < totalPages
   // Determine if there's a previous page
-  const hasPreviousPage = currentPage > 1;
+  const hasPreviousPage = currentPage > 1
 
   const handleNextPage = () => {
-    setCurrentPage(currentPage + 1);
-  };
+    setCurrentPage((prev) => prev + 1)
+  }
 
   const handlePreviousPage = () => {
-    setCurrentPage(currentPage - 1);
-  };
+    setCurrentPage((prev) => prev - 1)
+  }
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1 } },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200/80">
+    <motion.div
+      className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Header */}
-      <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200/80">
-        <h2 className="text-xl font-semibold text-slate-800">
-          Deals Details
-        </h2>
-        <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-md text-sm text-slate-600 hover:bg-slate-50">
+      <motion.div
+        variants={itemVariants}
+        className="flex justify-between items-center pb-5 mb-5 border-b border-gray-200"
+      >
+        <div className="flex items-center gap-3">
+          <TrendingUp className="w-6 h-6 text-blue-600" />
+          <h2 className="text-2xl font-semibold text-gray-800">Deals Details</h2>
+        </div>
+        {/* CORRECTED THIS LINE */}
+        <motion.button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           October
-        </button>
-      </div>
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        </motion.button>
+      </motion.div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <motion.div variants={itemVariants} className="overflow-x-auto rounded-2xl border border-gray-200/50">
         <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-500 font-semibold">
+          <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th scope="col" className="p-4">
+              <th scope="col" className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 ID
               </th>
-              <th scope="col" className="p-4">
+              <th scope="col" className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Product Name
               </th>
-              <th scope="col" className="p-4">
-                Descriptions
+              <th scope="col" className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Description
               </th>
-              <th scope="col" className="p-4">
+              <th scope="col" className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Date - Time
               </th>
-              <th scope="col" className="p-4">
+              <th scope="col" className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Amount
               </th>
             </tr>
           </thead>
           <tbody>
-            {displayedProducts.map((product, index) => (
-              <tr
-                key={product.id}
-                className="border-t border-slate-200/80 hover:bg-slate-50/50"
-              >
-                <td className="p-4 text-slate-600 font-medium">
-                  {startIndex + index + 1}
-                </td>
-                <td className="p-4 font-medium text-slate-800">
-                  <div className="flex items-center gap-3">
-                    {product.product_image_url ? (
-                      <div className="relative w-9 h-9">
-                        <Image
-                          src={
-                            product.product_image_url || "/default_avatar.png"
-                          } // Fallback URL if product_image_url is not available
-                          alt={product.name}
-                          width={36}
-                          height={36}
-                          style={{ height: "auto", width: "auto" }}
-                          className="rounded-md object-cover"
-                        />
+            <AnimatePresence mode="wait">
+              {displayedProducts.length > 0 ? (
+                displayedProducts.map((product, index) => (
+                  <motion.tr
+                    key={product.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="border-t border-gray-100 hover:bg-gray-50 transition-colors group"
+                  >
+                    <td className="p-4 text-gray-600 font-medium">#{startIndex + index + 1}</td>
+                    <td className="p-4 font-medium text-gray-800">
+                      <div className="flex items-center gap-3">
+                        {product.product_image_url ? (
+                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gray-100">
+                            <Image
+                              src={product.product_image_url || "/placeholder.svg"}
+                              alt={product.name}
+                              width={40}
+                              height={40}
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400">
+                            No Image
+                          </div>
+                        )}
+                        {product.name}
                       </div>
-                    ) : (
-                      <div className="w-9 h-9 bg-slate-100 rounded-md flex items-center justify-center text-xs text-slate-400">
-                        No Image
-                      </div>
-                    )}
-                    {product.name}
-                  </div>
-                </td>
-                <td className="p-4 text-slate-600">
-                  {product.description?.length > 50
-                    ? product.description.slice(0, 50) + "..."
-                    : product.description || "No description"}
-                </td>
-
-                <td className="p-4 text-slate-600">
-                  {new Date(product.created_at).toLocaleString()}
-                </td>
-
-                <td className="p-4 text-slate-600 font-medium">
-                  ${product.price}
-                </td>
-              </tr>
-            ))}
+                    </td>
+                    <td className="p-4 text-gray-600">
+                      {product.description?.length > 50
+                        ? product.description.slice(0, 50) + "..."
+                        : product.description || "No description"}
+                    </td>
+                    <td className="p-4 text-gray-600">{new Date(product.created_at).toLocaleString()}</td>
+                    <td className="p-4 text-green-600 font-semibold">${product.price}</td>
+                  </motion.tr>
+                ))
+              ) : (
+                <motion.tr key="no-products" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <td colSpan={5} className="p-6 text-center text-gray-500">
+                    No products found for this period.
+                  </td>
+                </motion.tr>
+              )}
+            </AnimatePresence>
           </tbody>
         </table>
-      </div>
+      </motion.div>
 
       {/* Pagination */}
-      <div className="flex justify-end items-center p-4 space-x-2">
-      <span>Page {currentPage}</span>
-        <button
-          onClick={handlePreviousPage}
-          disabled={!hasPreviousPage}
-          className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-        >
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          Back
-        </button>
-        
-        <button
-          onClick={handleNextPage}
-          disabled={!hasNextPage}
-          className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-        >
-          Next
-          <ChevronRight className="w-4 h-4 ml-1" />
-        </button>
-      </div>
-    </div>
-  );
-};
+      {products.length > pageSize && (
+        <motion.div variants={itemVariants} className="flex justify-between items-center pt-6 border-t border-gray-200">
+          <span className="text-sm text-gray-600">
+            Showing {startIndex + 1} to {Math.min(endIndex, products.length)} of {products.length} deals
+          </span>
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={handlePreviousPage}
+              disabled={!hasPreviousPage}
+              className="px-4 py-2 border border-gray-200 rounded-xl bg-white text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </motion.button>
+            <span className="px-4 py-2 text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </span>
+            <motion.button
+              onClick={handleNextPage}
+              disabled={!hasNextPage}
+              className="px-4 py-2 border border-gray-200 rounded-xl bg-white text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
+  )
+}
 
-export default DealsTable;
+export default DealsDetails

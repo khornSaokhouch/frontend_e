@@ -1,38 +1,51 @@
 import { create } from "zustand";
-import { request } from "../util/request"; // Adjust path if needed
+import { request } from "../util/request"; // your existing request helper
 
 export const useStore = create((set) => ({
   stores: [],
-  loading: false, // This is for the main fetchStores list
+  loading: false,
   error: null,
 
-  fetchStores: async () => {
-    set({ loading: true, error: null }); // Start loading, reset error
+  fetchStores: async (userId) => {
+    set({ loading: true, error: null });
     try {
-      const res = await request("/stores", "GET");
-      set({ 
-        stores: Array.isArray(res) ? res : [], // Ensure stores is always an array
+      const url = userId ? `/stores?userId=${userId}` : "/stores"; // ✅ Optional filtering
+      const res = await request(url, "GET");
+  
+      set({
+        stores: Array.isArray(res) ? res : [],
         loading: false,
+        error: null,
       });
     } catch (err) {
-      set({ 
-        error: "Failed to fetch stores", 
-        loading: false, 
-        stores: [] 
+      set({
+        error: "Failed to fetch stores",
+        loading: false,
+        stores: [],
       });
     }
   },
   
 
-  // IMPROVEMENT 1: Removed state setting. This is now a pure data-fetching utility.
-  // The component calling this should manage its own loading/error state if needed.
+  // NEW: fetch stores by user ID
+  fetchStoresByUserId: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await request(`/stores/user/${userId}`, 'GET');
+      set({ stores: Array.isArray(res) ? res : [], loading: false, error: null });
+    } catch (err) {
+      set({ error: err.message || 'Failed to fetch stores', loading: false, stores: [] });
+    }
+  },
+  
+  
+
   getStoreById: async (id) => {
     try {
       const res = await request(`/stores/${id}`, "GET");
       return res;
     } catch (err) {
       console.error("Failed to fetch store by ID:", err);
-      // It doesn't set global state, just returns null on failure.
       return null;
     }
   },
@@ -40,17 +53,15 @@ export const useStore = create((set) => ({
   createStore: async (data) => {
     try {
       const newStore = await request("/stores", "POST", data);
-      // It's good practice to check if the API returned a valid object
       if (!newStore || !newStore.id) {
-          throw new Error("Invalid response from server on create.");
+        throw new Error("Invalid response from server on create.");
       }
       set((state) => ({
         stores: [...state.stores, newStore],
+        error: null,
       }));
-      return newStore; // Return the newly created store
+      return newStore;
     } catch (err) {
-      // IMPROVEMENT 2: Re-throw the error so the component can catch it.
-      // This works perfectly with toast.promise or try/catch in the component.
       console.error("Failed to create store:", err);
       throw err;
     }
@@ -60,14 +71,16 @@ export const useStore = create((set) => ({
     try {
       const updatedStore = await request(`/stores/${id}`, "PUT", data);
       if (!updatedStore || !updatedStore.id) {
-          throw new Error("Invalid response from server on update.");
+        throw new Error("Invalid response from server on update.");
       }
       set((state) => ({
-        stores: state.stores.map((s) => (s.id === id ? updatedStore : s)),
+        stores: state.stores.map((store) =>
+          store.id === id ? updatedStore : store
+        ),
+        error: null,
       }));
       return updatedStore;
     } catch (err) {
-      // IMPROVEMENT 2: Re-throw the error.
       console.error("Failed to update store:", err);
       throw err;
     }
@@ -77,11 +90,11 @@ export const useStore = create((set) => ({
     try {
       await request(`/stores/${id}`, "DELETE");
       set((state) => ({
-        stores: state.stores.filter((s) => s.id !== id),
+        stores: state.stores.filter((store) => store.id !== id),
+        error: null,
       }));
-      // On success, we don't need to return anything, but we could return true.
+      return true;
     } catch (err) {
-      // IMPROVEMENT 2: Re-throw the error.
       console.error("Failed to delete store:", err);
       throw err;
     }

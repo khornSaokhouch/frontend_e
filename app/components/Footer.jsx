@@ -1,146 +1,119 @@
-"use client";
+"use client"; // For Next.js App Router
 
-import React, { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { FaFacebook, FaInstagram, FaTiktok, FaTwitter, FaTelegram } from "react-icons/fa";
+import React from 'react';
+import Link from 'next/link';
+import { 
+  FaFacebookF, 
+  FaTwitter, 
+  FaInstagram, 
+  FaLinkedinIn,
+  FaCcVisa,
+  FaCcMastercard,
+  FaCcPaypal,
+  FaCcAmex,
+  FaLock
+} from 'react-icons/fa';
 
-
-const Footer = () => {
+const EcommerceFooter = () => {
   return (
-    <footer className="bg-white text-gray-700 font-sans pt-12 pb-4">
-      {/* Top Section */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-start mb-8"> {/* Aligned items to the top */}
-          <h2 className="text-2xl font-semibold text-gray-800 max-w-md">
-            Enjoy your shopping with TECHNESS the biggest online market.
-          </h2>
-          <button className="rounded-full border border-gray-400 text-gray-700 py-2 px-6 hover:bg-gray-100 transition-colors text-sm font-semibold">
-            Contact Us
-          </button>
+    <footer className="bg-white text-gray-800 font-sans">
+      {/* Section 1: Newsletter Signup */}
+      {/* <div className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Join Our World</h2>
+          <p className="text-gray-600 mb-6">Get 15% off your first order and stay up-to-date with our latest news and offers.</p>
+          <form className="flex flex-col sm:flex-row justify-center items-center gap-2 max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="w-full sm:w-auto flex-grow px-4 py-3 rounded-md border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <button
+              type="submit"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md transition-colors duration-300"
+            >
+              Subscribe
+            </button>
+          </form>
         </div>
+      </div> */}
 
-        <hr className="border-gray-300 mb-8" />
-
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* About TECHNESS */}
+      {/* Section 2: Main Footer Links */}
+      <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Column 1: Brand & Social */}
           <div>
-            <h3 className="text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wider">
-              About TECHNESS
-            </h3>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              TECHNESS is the leading online marketplace where you can buy and
-              sell everything from cars, motorcycles, mobile phones, computers,
-              electronics, furniture, books, pets, foods, and more. TECHNESS
-              connects buyers and sellers across the country, making it easy
-              and convenient to find what you need or sell what you don't want.
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">TECHNESS</h3>
+            <p className="text-gray-600 text-sm mb-4">
+              Your one-stop shop for the latest and greatest in tech.
             </p>
-            {/* Social Icons */}
-            <div className="flex mt-4 space-x-3">
-              <Link href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
-                <FaFacebook size={20} />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
-                <FaInstagram size={20} />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
-                <FaTiktok size={20} />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
-                <FaTwitter size={20} />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-gray-800 transition-colors">
-                <FaTelegram size={20} />
-              </Link>
+            <div className="flex space-x-4">
+              <Link href="#" className="text-gray-500 hover:text-blue-600 transition-colors"><FaFacebookF size={20} /></Link>
+              <Link href="#" className="text-gray-500 hover:text-blue-600 transition-colors"><FaTwitter size={20} /></Link>
+              <Link href="#" className="text-gray-500 hover:text-blue-600 transition-colors"><FaInstagram size={20} /></Link>
+              <Link href="#" className="text-gray-500 hover:text-blue-600 transition-colors"><FaLinkedinIn size={20} /></Link>
             </div>
           </div>
 
-          {/* Company */}
+          {/* Column 2: Shop */}
           <div>
-            <h3 className="text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wider">
-              Company
-            </h3>
+            <h4 className="font-semibold text-gray-800 uppercase tracking-wider mb-4">Shop</h4>
             <ul className="space-y-2">
-              <li>
-                <Link href="#" className="block text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="block text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="block text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Work
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="block text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Career
-                </Link>
-              </li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">New Arrivals</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Best Sellers</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Laptops</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Smartphones</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Accessories</Link></li>
             </ul>
           </div>
 
-          {/* Help */}
+          {/* Column 3: Support */}
           <div>
-            <h3 className="text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wider">
-              Help
-            </h3>
+            <h4 className="font-semibold text-gray-800 uppercase tracking-wider mb-4">Support</h4>
             <ul className="space-y-2">
-              <li>
-                <Link href="#" className="text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Customer Support
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Delivery Details
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Contact Us</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">FAQ</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Shipping & Returns</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Track Your Order</Link></li>
             </ul>
           </div>
 
-          {/* Useful Information */}
+          {/* Column 4: About Us */}
           <div>
-            <h3 className="text-sm font-semibold mb-3 text-gray-800 uppercase tracking-wider">
-              Useful Information
-            </h3>
+            <h4 className="font-semibold text-gray-800 uppercase tracking-wider mb-4">About Us</h4>
             <ul className="space-y-2">
-              <li>
-                <Link href="#" className="text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Safety Tip
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-xs text-gray-600 hover:text-gray-800 transition-colors">
-                  Ads Posting Rule
-                </Link>
-              </li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Our Story</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Careers</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Terms of Service</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Copyright Section */}
-      <div className="bg-black text-white text-center py-4">
-        <p className="text-xs">© Copyright Rimel 2022. All rights reserved</p>
+      {/* Section 3: Bottom Bar with Copyright and Payment Icons */}
+      <div className="bg-white py-6 px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center text-sm gap-4">
+          <p className="text-gray-500 text-center sm:text-left">
+            © {new Date().getFullYear()} TECHNESS. All Rights Reserved.
+          </p>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 border border-gray-300 rounded-md p-1">
+              <FaLock className="text-green-500" />
+              <span className="text-gray-600 text-xs font-semibold">SSL SECURED</span>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-500">
+                <FaCcVisa size={28} />
+                <FaCcMastercard size={28} />
+                <FaCcPaypal size={28} />
+                <FaCcAmex size={28} />
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   );
 };
 
-export default Footer;
+export default EcommerceFooter;
